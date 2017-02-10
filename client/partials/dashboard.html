@@ -1,0 +1,16 @@
+<div class="col-lg-6">
+                <h1> Exchange Rates </h1>
+        <table class="table">
+                <tr>
+                        <th>Currency Code</th>
+                        <th>Latest</th>
+                        <th>Buy</th>
+                        <th>Sell</th>
+                </tr>
+                <tr class="table-row" ng-repeat='rate in exchangeRates'>
+                        <td class="currency">{{rate.currency}} ({{rate.symbol}})</td>
+                        <td class="latest">{{rate.last}}</td>
+                        <td class="buy">{{rate.buy}}</td>
+                        <td class="sell">{{rate.sell}}</td>
+                </tr>
+</table>

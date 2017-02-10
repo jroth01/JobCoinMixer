@@ -1,0 +1,15 @@
+{
+  "name": "BitMixer",
+  "version": "0.0.1",
+  "dependencies": {
+    "angular-route": "latest",
+    "axios": "latest",
+    "blockchain.info": "^2.5.0",
+    "body-parser": "latest",
+    "circular-json": "^0.3.1",
+    "ejs": "latest",
+    "express": "latest",
+    "node": "latest",
+    "validator": "latest"
+  }
+}

@@ -1,0 +1,29 @@
+body {
+font-family: 'Roboto', sans-serif;
+
+}
+
+
+
+.white {
+        color:#EAEAEA;
+}
+.primary-bg {
+        background-color:#50305B;
+        color:#EAEAEA;
+}
+
+.secondary-bg {
+        background-color:#56667A;
+        color:#EAEAEA;
+}
+
+.dark-bg {
+        background-color:#07090F;
+
+        color:#EAEAEA;
+}
+
+.accent {
+        color:#A7ADC6;
+}
