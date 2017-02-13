@@ -53,8 +53,6 @@ var depositAddress = 'MixDeposit';
 var houseAddresses = ["House1","House2","House3","House4","House5","House6",
  					 "House7", "House8","House9","House10"];
 
-
-
 /* ----------------------------------------------------------------------------- *
  *
  * 		Endpoints 
@@ -124,6 +122,7 @@ function mixJobCoins(lastMixDate) {
  
         	var allHouseDeposits = [];
         	var withdrawalAddresses = [];
+        	var returnDeposits = [];
        	 	var houseDeposits, from, to, str;
         	str = CircularJSON.stringify(res.data);
         	console.log(str);
@@ -133,33 +132,23 @@ function mixJobCoins(lastMixDate) {
 
        	 	// for each amount sent to deposit address,
        	 	// generate incremental portions of that amount
-       	 	// that will be sent from the deposit address to the house accounts
        	 	mixDeposits.map((deposit) => {
 				houseDeposits = generateDeposits(deposit.amount, depositAddress, houseAddresses);
 				allHouseDeposits.push(houseDeposits);
 			});
 
-       	 	// make all deposits to the house account
+       	 	// make all incremental deposits to the house account
 			houseDeposits.map((transactions) => {
 				deposit(transactions);
 			});
 
-			// Get withdrawl addresses
-			db.collection('accounts', function(er, collection) {
-	            collection.find().toArray(function(err, docs) {
-	              if (!err) {
-	                 withdrawalAddresses = docs;
-	              } else {
-	                 return {};
-	              }
-	            });
-          	});
+			// get return deposit transactions 
+			returnDeposits = getReturnDeposits(mixDeposits);
 
-          	withdrawalAddresses.map((withdrawals) => {
-				
+			// make incremental return deposits to the user's withdrawl accounts
+			returnDeposits.map((transactions) => {
+				deposit(transactions);
 			});
-
-
 
         	response.send('Done mixing!');
 
@@ -168,6 +157,58 @@ function mixJobCoins(lastMixDate) {
           console.log(err);
         });
 
+}
+
+function getReturnDeposits(mixDeposits) {
+	    var returnTransactionInfo = [];
+		var returnDeposits = [];
+		var deposit, houseIndex;
+		returnTransactionInfo = getReturnTransactionInfo(mixDeposits);
+
+		returnTransactionInfo.map((info) => {
+			houseIndex = randomInt (0, houseAddresses.length);
+			deposit = generateDeposits(info.amount, houseAddresses[houseIndex], 
+										info.withdrawalAddresses)
+			returnDeposits.push(deposit);
+		});
+
+		return returnDeposits;
+}
+
+function getReturnTransactionInfo(mixDeposits) {
+
+	var withdrawalAddresses;
+	var transactionInfo = []
+
+	// Get withdrawl addresses stored in db for each user
+	db.collection('accounts', function(er, collection) {
+	    collection.find().toArray(function(err, docs) {
+	      if (!err) {
+	         withdrawalAddresses = docs;
+	      } else {
+	         return {};
+	      }
+	    });
+		});
+
+	// Match the user with their withdrawal addresses
+	mixDepositsAddresses.map((item) => {
+		withdrawalAddresses.map((withdrawl) => {
+
+			if (item.fromAddress === withdrawl.parentAddress) {
+
+				var returnInfo = {
+					"amount": item.amount,
+					"fromAddress": item.fromAddress,
+					"withdrawalAddresses": withdrawl.withdrawalAddresses;
+				}
+
+				transactionInfo.push(returnInfo);
+			}
+		});
+	});
+
+	return transactionInfo;
 }
 
 /* Returns transactions with a toAddress matching the mixer's depositAddress */
