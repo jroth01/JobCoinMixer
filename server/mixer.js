@@ -18,12 +18,53 @@ var db = MongoClient.connect(mongoUri, function(error, databaseConnection) {
 module.exports = function(app){
 
 
+/* Get the balance and list of transactions for an address
+ * Query string parameter: address
+ */
+app.get('/addresses', function(request, response) {
 
-function queryAccounts() {
-       
-}
+    addressesURL += request.query.address;
+    axios.get(addressesURL)
+        .then(function(res){
+          var obj, str;
+          obj = res;
+          obj = {
+                  transactions: obj.data.transactions,
+                  balance: obj.data.balance
+          };
+          str = CircularJSON.stringify(obj);
+          console.log(str);
+          response.send(str);
 
+        })
+        .catch((err) => {
+          console.log(err);
+        });
 
+});
+
+/* POST new transaction */
+app.post('/transactions', function(request, response) {
+
+        var obj = {
+                fromAddress: request.query.from,
+                toAddress: request.query.to,
+                amount: request.query.amount
+        }
+
+        axios.post(transactionsURL, obj)
+                  .then(function(res){
+                        var obj, str;
+                        obj = res;
+                        str = CircularJSON.stringify(obj.data);
+                        console.log(str);
+                      response.send(str);
+                      
+                  })
+                  .catch((err) => {
+                          console.log(err);
+                  });
+});
 
 
 }
