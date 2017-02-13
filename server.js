@@ -79,29 +79,28 @@ app.get('/mainCtrl.js', function(request, response) {
  */
 app.post('/register', function(request, response) {
            
-			// used for laundering 
-           var withdrawals = request.body.withdrawalAddresses; 
-           var parent = request.body.parentAddress;
-             
-           var toInsert = {
-              "parentAddress": parent,
-              "withdrawalAddresses": withdrawals
-            };
+	var withdrawals = request.body.withdrawalAddresses; 
+	var parent = request.body.parentAddress;
+	 
+	var toInsert = {
+	  "parentAddress": parent,
+	  "withdrawalAddresses": withdrawals
+	};
 
-            // Save information in a database
-            db.collection('accounts', function(er, collection) {
-              collection.insert(toInsert, function(err, saved) {
-                if (err) {
-                    response.sendStatus(500);
-                } else if (!saved) {
-                    response.sendStatus(500);
-                } else {
-                	var res = 'Saved the following information: ' + JSON.stringify(toInsert);
-                	res += '\n This mixer\'s deposit address is \'' + depositAddress + '\'';
-                    response.send(res);
-                }
-              });
-            });   
+	// Save information in a database
+	db.collection('accounts', function(er, collection) {
+	  collection.insert(toInsert, function(err, saved) {
+	    if (err) {
+	        response.sendStatus(500);
+	    } else if (!saved) {
+	        response.sendStatus(500);
+	    } else {
+	    	var res = 'Saved the following information: ' + JSON.stringify(toInsert);
+	    	res += '\n This mixer\'s deposit address is \'' + depositAddress + '\'';
+	        response.send(res);
+	    }
+	  });
+	});   
 });
 
 /* ----------------------------------------------------------------------------- *
@@ -112,55 +111,55 @@ app.post('/register', function(request, response) {
 
 
 /* 
- * Parse out deposits to mixer's deposit address
+ * Parse out deposits to mixer's deposit address from the P2P network
  * Moves BTC from deposit address to house addresses
  * Moves BTC from house addresses back to user's withdrawl addresses
  *
  * Parameter: lastMixDate, the timestamp of when the mixer last tumbled JobCoins
  */
 function mixJobCoins(lastMixDate) {
-       axios.get(transactionsURL)
-        	.then(function(res){
- 
-        	var allHouseDeposits = [];
-        	var withdrawalAddresses = [];
-        	var returnDeposits = [];
-       	 	var houseDeposits, from, to, str;
-        	str = CircularJSON.stringify(res.data);
-        	console.log(str);
-       	 	
-       	 	// identify transactions sent to deposit address
-       	 	var mixDeposits = getMixDeposits(obj.data, lastMixDate);
+   axios.get(transactionsURL)
+    	.then(function(res){
 
-       	 	// for each amount sent to deposit address,
-       	 	// generate incremental portions of that amount
-       	 	mixDeposits.map((deposit) => {
-				houseDeposits = generateDeposits(deposit.amount, depositAddress, houseAddresses);
-				allHouseDeposits.push(houseDeposits);
-			});
+    	var allHouseDeposits = [];
+    	var withdrawalAddresses = [];
+    	var returnDeposits = [];
+   	 	var houseDeposits, from, to, str;
+    	str = CircularJSON.stringify(res.data);
+    	console.log(str);
+   	 	
+   	 	// identify transactions sent to deposit address
+   	 	var mixDeposits = getMixDeposits(obj.data, lastMixDate);
 
-       	 	// make all incremental deposits to the house account
-			houseDeposits.map((transactions) => {
-				deposit(transactions);
-			});
+   	 	// for each amount sent to deposit address,
+   	 	// generate incremental portions of that amount
+   	 	mixDeposits.map((deposit) => {
+			houseDeposits = generateDeposits(deposit.amount, depositAddress, houseAddresses);
+			allHouseDeposits.push(houseDeposits);
+		});
 
-			// get return deposit transactions 
-			returnDeposits = getReturnDeposits(mixDeposits);
+   	 	// make all incremental deposits to the house account
+		houseDeposits.map((transactions) => {
+			deposit(transactions);
+		});
 
-			// make incremental return deposits to the user's withdrawl accounts
-			returnDeposits.map((transactions) => {
-				deposit(transactions);
-			});
+		// get return deposit transactions 
+		returnDeposits = getReturnDeposits(mixDeposits);
 
-			if (mixDeposits.length === 0) 
-				response.send('Nothing to mix!');
-			else 
-				response.send('Done mixing!');
+		// make incremental return deposits to the user's withdrawl accounts
+		returnDeposits.map((transactions) => {
+			deposit(transactions);
+		});
 
-        })
-        .catch((err) => {
-          console.log(err);
-        });
+		if (mixDeposits.length === 0) 
+			response.send('Nothing to mix!');
+		else 
+			response.send('Done mixing!');
+
+    })
+    .catch((err) => {
+      console.log(err);
+    });
 
 }
 
@@ -174,19 +173,19 @@ function mixJobCoins(lastMixDate) {
  * to be sent from various house addresses to a user's withdrawal addresses
  */
 function getReturnDeposits(mixDeposits) {
-	    var returnTransactionInfo = [];
-		var returnDeposits = [];
-		var deposit, houseIndex;
-		returnTransactionInfo = getReturnTransactionInfo(mixDeposits);
+    var returnTransactionInfo = [];
+	var returnDeposits = [];
+	var deposit, houseIndex;
+	returnTransactionInfo = getReturnTransactionInfo(mixDeposits);
 
-		returnTransactionInfo.map((info) => {
-			houseIndex = randomInt (0, houseAddresses.length);
-			deposit = generateDeposits(info.amount, houseAddresses[houseIndex], 
-										info.withdrawalAddresses)
-			returnDeposits.push(deposit);
-		});
+	returnTransactionInfo.map((info) => {
+		houseIndex = randomInt (0, houseAddresses.length);
+		deposit = generateDeposits(info.amount, houseAddresses[houseIndex], 
+									info.withdrawalAddresses)
+		returnDeposits.push(deposit);
+	});
 
-		return returnDeposits;
+	return returnDeposits;
 }
 
 /* Returns an array of objects that map parent addresses to their 
@@ -299,12 +298,12 @@ function sum(transactions) {
 
 /* Returns JSON deposit object */
 function createDepositObj(from, to, amt) {
-		var deposit = {
-                fromAddress: from,
-                toAddress: to,
-                amount: amt
-        }
-        return deposit;
+	var deposit = {
+            fromAddress: from,
+            toAddress: to,
+            amount: amt
+    }
+    return deposit;
 }
 
 /* Returns a random number between a lower and upper bound */
