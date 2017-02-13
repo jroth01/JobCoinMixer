@@ -19,7 +19,7 @@ parentAddress: the address of the parent account
 
 #High Level Overview
 
-![alt tag](flowchart.svg)
+![alt tag](flowchart.jpg)
 
 #Useage
 npm install
