@@ -16,6 +16,8 @@ var houseAddresses = ["House1","House2","House3","House4","House5","House6",
 var axios = require('axios');
 var CircularJSON = require('circular-json');
 
+var moment = require('moment');
+
 
 /* ----------------------------------------------------------------------------- *
  *
@@ -32,17 +34,20 @@ require('./config.js')(app);
 
 /* ----------------------------------------------------------------------------- *
  *
- *    Timer 
+ *    Timer Function - calls mixer function every n seconds
  *
  * ----------------------------------------------------------------------------- */
 
-mixJobCoins();
+// set timer interval to poll the P2P network and mix every minute
+var seconds = 5; 
+var milliseconds = seconds * 1000;
 
-// var interval = setInterval(function() {
-//   console.log("Timer elapsed. Starting mixer to poll P2P network & tumble coins");
-//   mixJobCoins();
-// }, 1000);
+var timer = setInterval(function() {
+  console.log("Timer elapsed. Starting mixer to poll P2P network & tumble coins");
+  mixJobCoins();
+}, milliseconds);
 
+//clearInterval(timer);
 
 /* ----------------------------------------------------------------------------- *
  *
@@ -68,7 +73,9 @@ function mixJobCoins() {
     var returnDeposits = [];
     var lastMixDate, mixDeposits, houseDeposits, from, to, str;
     str = CircularJSON.stringify(res.data);
-    console.log(str);
+    
+    var now = moment().format('MMMM Do YYYY, h:mm:ss a');
+    console.log('Transaction ledger as of ' + now + ': \n' + str);
 
     lastMixDate = getLastMixDate();
 
@@ -140,6 +147,10 @@ function getLastMixDate() {
 
 }
 
+function verifyMix() {
+
+}
+
 /* Returns an array of return deposit transactions 
  * to be sent from various house addresses to a user's withdrawal addresses
  */
@@ -198,13 +209,6 @@ function getReturnTransactionInfo(mixDeposits) {
   return transactionInfo;
 }
 
-function isNull(arr) {
-  for (var i = 0; i < arr.length; i++) {
-      if (arr[i] != null)
-        return false;
-  }
-  return true;
-}
 
 /* Returns transactions with a toAddress matching the mixer's depositAddress */
 function getMixDeposits(transactions, lastMixDate) {
@@ -278,6 +282,33 @@ function generateDeposits(originalAmount, fromAddress, destinationList) {
     return transactions;
 }
 
+/* Recursively makes all deposits in a list of transactions */
+function deposit(transactions)
+{
+  var depositObj = transactions[0];
+
+  axios.post(transactionsURL, depositObj)
+        .then(function(res){
+              var str, msg;
+              str = CircularJSON.stringify(res.data);
+
+              // Base case - list is empty
+              if (transactions.length == 0) {
+                msg = transactions.length + " completed successfully.";
+              console.log(msg); 
+            }
+              
+              console.log('Depositing: ' + JSON.stringify(depositObj)); 
+              
+              // Recurse on the rest of the list items
+              deposit(transactions.shift());
+            
+        })
+        .catch((err) => {
+                console.log(err);
+        });
+}
+
 /* Returns the sum of a series of transactions */
 function sum(transactions) {
   var sum = 0;
@@ -307,31 +338,14 @@ function randomInt (low, high) {
   return Math.floor(Math.random() * (high - low) + low);
 }
 
-/* Recursively makes all deposits in a list of transactions */
-function deposit(transactions)
-{
-  var depositObj = transactions[0];
-
-  axios.post(transactionsURL, depositObj)
-        .then(function(res){
-              var str, msg;
-              str = CircularJSON.stringify(res.data);
-
-              // Base case - list is empty
-              if (transactions.length == 0) {
-                msg = transactions.length + " completed successfully.";
-              console.log(msg); 
-            }
-              
-              console.log('Depositing: ' + JSON.stringify(depositObj)); 
-              
-              // Recurse on the rest of the list items
-              deposit(transactions.shift());
-            
-        })
-        .catch((err) => {
-                console.log(err);
-        });
+/* Returns true if every elem in an array is null, else false */
+function isNull(arr) {
+  for (var i = 0; i < arr.length; i++) {
+      if (arr[i] != null)
+        return false;
+  }
+  return true;
 }
+
 
 } /* end module.exports */

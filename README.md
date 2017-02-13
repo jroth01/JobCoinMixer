@@ -22,5 +22,7 @@ parentAddress: the address of the parent account
 ![alt tag](flowchart.png)
 
 #Useage
+
 npm install
+
 node server.js
