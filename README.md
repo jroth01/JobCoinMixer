@@ -1,5 +1,5 @@
-#Bitcoin Mixer
-A bitcoin tumbler
+#JobCoin Mixer
+A JobCoin tumbler for Gemini
 
 1. User must provide a list of withdrawl addresses via POST /mix
 
