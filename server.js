@@ -71,13 +71,13 @@ app.get('/mainCtrl.js', function(request, response) {
 });
 
 /* 
- * POST /withdrawals 
+ * POST /register
  *
- * The body of the POST request to /withdrawals must contain the following JSON
+ * The body of the POST request to /register must contain the following JSON
  * withdrawalAddresses : an array of withdrawl addresses
  * parentAddress: the address of the parent account
  */
-app.post('/registerAddresses', function(request, response) {
+app.post('/register', function(request, response) {
            
 			// used for laundering 
            var withdrawals = request.body.withdrawalAddresses; 
@@ -106,14 +106,17 @@ app.post('/registerAddresses', function(request, response) {
 
 /* ----------------------------------------------------------------------------- *
  *
- * 		Helper functions
+ * 		Mixer function
  *
  * ----------------------------------------------------------------------------- */
+
 
 /* 
  * Parse out deposits to mixer's deposit address
  * Moves BTC from deposit address to house addresses
  * Moves BTC from house addresses back to user's withdrawl addresses
+ *
+ * Parameter: lastMixDate, the timestamp of when the mixer last tumbled JobCoins
  */
 function mixJobCoins(lastMixDate) {
        axios.get(transactionsURL)
@@ -161,6 +164,15 @@ function mixJobCoins(lastMixDate) {
 
 }
 
+/* ----------------------------------------------------------------------------- *
+ *
+ * 		Helper functions
+ *
+ * ----------------------------------------------------------------------------- */
+
+/* Returns an array of return deposit transactions 
+ * to be sent from various house addresses to a user's withdrawal addresses
+ */
 function getReturnDeposits(mixDeposits) {
 	    var returnTransactionInfo = [];
 		var returnDeposits = [];
@@ -177,6 +189,9 @@ function getReturnDeposits(mixDeposits) {
 		return returnDeposits;
 }
 
+/* Returns an array of objects that map parent addresses to their 
+ * corresponding withdrawal addresses
+ */
 function getReturnTransactionInfo(mixDeposits) {
 
 	var withdrawalAddresses;
@@ -273,7 +288,7 @@ function generateDeposits(originalAmount, fromAddress, destinationList) {
     return transactions;
 }
 
-
+/* Returns the sum of a series of transactions */
 function sum(transactions) {
 	var sum = 0;
 	transactions.map((item) => {
