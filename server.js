@@ -71,11 +71,13 @@ app.get('/mainCtrl.js', function(request, response) {
 });
 
 /* 
- * The body of the POST request to /mix must contain the following JSON
+ * POST /withdrawals 
+ *
+ * The body of the POST request to /withdrawals must contain the following JSON
  * withdrawalAddresses : an array of withdrawl addresses
  * parentAddress: the address of the parent account
  */
-app.post('/mix', function(request, response) {
+app.post('/registerAddresses', function(request, response) {
            
 			// used for laundering 
            var withdrawals = request.body.withdrawalAddresses; 
@@ -101,9 +103,6 @@ app.post('/mix', function(request, response) {
               });
             });   
 });
-
-	
-
 
 /* ----------------------------------------------------------------------------- *
  *
@@ -150,7 +149,10 @@ function mixJobCoins(lastMixDate) {
 				deposit(transactions);
 			});
 
-        	response.send('Done mixing!');
+			if (mixDeposits.length === 0) 
+				response.send('Nothing to mix!');
+			else 
+				response.send('Done mixing!');
 
         })
         .catch((err) => {
@@ -215,7 +217,7 @@ function getReturnTransactionInfo(mixDeposits) {
 function getMixDeposits(transactions, lastMixDate) {
 
 	var mixDeposits = transactions.map((item) => {
-  		if ( (item.toAddress === depositAddress) && (item.timestamp < lastMixDate)) {
+  		if ( (item.toAddress === depositAddress) && (item.timestamp > lastMixDate)) {
    			return item;
   		}
 	});
