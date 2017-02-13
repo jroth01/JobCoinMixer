@@ -28,9 +28,8 @@ var db = MongoClient.connect(mongoUri, function(error, databaseConnection) {
 });
 
 /* Mixer Address to which coins will be sent */
-var mixerAddress = 'laundry';
-var depositAddress = 'deposit';
-var houseAddress = 'house';
+var depositAddress = 'MixDeposit';
+var houseAddresses = ["House1","House2","House3","House4","House5","House6", "House7", "House8","House9","House10"];
 
 /* App Configuration */
 app.use(bodyParser.json());
@@ -46,7 +45,7 @@ app.set('view engine', 'html');
  * 		Endpoints 
  *
  * ----------------------------------------------------------------------------- */
- 
+
 app.get('/', function(request, response) {
         response.render('partials/index.html');
 });
@@ -72,26 +71,24 @@ app.post('/mix', function(request, response) {
                 } else if (!saved) {
                     response.sendStatus(500);
                 } else {
-                    response.send('Saved the following information: ' + JSON.stringify(toInsert));
+                	var res = 'Saved the following information: ' + JSON.stringify(toInsert);
+                	res += '\n This mixer\'s deposit address is \'' + depositAddress + '\'';
+                    response.send(res);
                 }
               });
             });   
 });
 
-/* GET withdrawal accounts 
- * (for dev purposes only - remove for production)
- */
-app.get('/accounts', function(request, response) {
- db.collection('accounts', function(er, collection) {
-            collection.find().toArray(function(err, docs) {
-              if (!err) {
-                 response.send('Saved the following information: ' + JSON.stringify(docs));
-              } else {
-                 response.send(JSON.stringify({}));
-              }
-            });
-          });
-});
+	// db.collection('accounts', function(er, collection) {
+          //   collection.find().toArray(function(err, docs) {
+          //     if (!err) {
+          //        return docs;
+          //     } else {
+          //        return {};
+          //     }
+          //   	});
+          // 	});
+
 
 /* GET list of transactions
  * Parse out deposits to mixer's deposit address
@@ -101,13 +98,24 @@ app.get('/pollTransactions', function(request, response) {
        axios.get(transactionsURL)
         	.then(function(res){
 
-        	// handle circular JSON
-        	var obj, str;
-        	obj = res;
-        	str = CircularJSON.stringify(obj.data);
+        	var  str;
+        	var allHouseDeposits = [];
+       	 	var houseDeposits,from, to;
+        	str = CircularJSON.stringify(res.data);
        	 	
        	 	// identify transactions sent to deposit address
        	 	var mixDeposits = getMixDeposits(obj.data);
+
+       	 	// for each amount sent to deposit address,
+       	 	// feed increments of the original amount to various house addresses
+       	 	mixDeposits.map((deposit) => {
+				houseDeposits = generateDeposits(deposit.amount, depositAddress, houseAddresses);
+				allHouseDeposits.push(houseDeposits);
+			});
+
+       
+       	 
+
 
         	response.send(str);
 
@@ -118,9 +126,84 @@ app.get('/pollTransactions', function(request, response) {
 
 });
 
-/* Parses transactions and looks for those with a toAddress matching
- * the mixer's depositAddress
+/* Returns a list of small deposit transactions that sum to
+ * an original amount
+ *
+ * Parameters: original amount, from address, an array of destination addresses
  */
+function generateDeposits(originalAmount, fromAddress, destinationList) {
+	var sum = 0;
+	var deposit, depositAmount, destinationIndex, difference, from, to;
+	var upperBound =  originalAmount / 4;
+	var transactions = [];
+	from = fromAddress;
+
+	// While we haven't transferred the full value of the originalAmount -1 
+	while (sum < originalAmount - 1) {
+
+		// generate a random int amount to deposit between 1 
+		// and quarter of the original 
+		depositAmount = randomNum(1,upperBound);
+
+		// pick a random destination address to deposit to
+		destinationIndex = randomInt(0, destinationList.length);
+
+		// specify the destination address
+		to = destinationList[destinationIndex];
+
+		// create the deposit object
+		deposit = createDepositObj(from, to, depositAmount);
+
+		// remember it in an array of transactions
+        transactions.push(deposit);
+
+		sum+= depositAmount
+	}
+
+	// compute the remaining difference
+	difference = originalAmount - sum;
+
+	// if there's a difference, add it to the list of deposits
+	if (difference > 0) {
+		destinationIndex = randomNum(0, destinationList.length);
+		to = destinationList[destinationIndex];
+		deposit = createDepositObj(from, to, difference);
+	    transactions.push(deposit);
+    }
+
+    return transactions;
+}
+
+
+function sum(transactions) {
+	var sum = 0;
+	transactions.map((item) => {
+		sum += item.amount;
+	});
+	return sum;
+}
+
+/* Returns JSON deposit object */
+function createDepositObj(from, to, amt) {
+		var deposit = {
+                fromAddress: from,
+                toAddress: to,
+                amount: amt
+        }
+        return deposit;
+}
+
+/* Returns a random number between a lower and upper bound */
+function randomNum (low, high) {
+    return Math.random() * (high - low) + low;
+}
+
+/* Returns a random int between a lower and upper bound */
+function randomInt (low, high) {
+    return Math.floor(Math.random() * (high - low) + low);
+}
+
+/* Returns transactions with a toAddress matching the mixer's depositAddress */
 function getMixDeposits(transactions) {
 
 	var mixDeposits = transactions.map((item) => {
@@ -131,11 +214,26 @@ function getMixDeposits(transactions) {
 	return mixDeposits;
 }
 
-/* Takes all deposits from depositAddress and moves them to house
- * the mixer's depositAddress
- */
+/* Recursiv 
+*/
 function depositToHouse(transactions)
-{}
+{
+	axios.post(transactionsURL, obj)
+	      .then(function(res){
+	            var str;
+	            str = CircularJSON.stringify(res.data);
+	            
+	            depositToHouse(transactions.shift());
+
+	            if (transactions.length == 0) {
+	        		response.send(res);
+	        	}
+	          
+	      })
+	      .catch((err) => {
+	              console.log(err);
+	      });
+}
 
 
 /* Get the balance and list of transactions for an address
@@ -176,9 +274,9 @@ app.post('/transactions', function(request, response) {
                   .then(function(res){
                         var obj, str;
                         obj = res;
-                                        str = CircularJSON.stringify(obj.data);
-                                        console.log(str);
-                    response.send(str);
+                        str = CircularJSON.stringify(obj.data);
+                        console.log(str);
+                    	response.send(str);
                       
                   })
                   .catch((err) => {
