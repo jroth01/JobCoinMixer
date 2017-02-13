@@ -50,6 +50,13 @@ app.get('/', function(request, response) {
         response.render('partials/index.html');
 });
 
+app.get('/app.js', function(request, response) {
+        response.sendFile(__dirname + '/client/js/app.js');
+});
+app.get('/mainCtrl.js', function(request, response) {
+        response.sendFile(__dirname + '/client/js/mainCtrl.js');
+});
+
 // Client sends a POST request in which the body contaiins a JSON array called "withdrawalAddresses"
 // along with a "parent address", or the original bitcoin address
 app.post('/mix', function(request, response) {
@@ -113,9 +120,6 @@ app.get('/pollTransactions', function(request, response) {
 				allHouseDeposits.push(houseDeposits);
 			});
 
-       
-       	 
-
 
         	response.send(str);
 
@@ -125,6 +129,62 @@ app.get('/pollTransactions', function(request, response) {
         });
 
 });
+
+/* Get the balance and list of transactions for an address
+ * Query string parameter: address
+ */
+app.get('/addresses', function(request, response) {
+
+        addressesURL += request.query.address;
+        axios.get(addressesURL)
+                .then(function(res){
+                var obj, str;
+                obj = res;
+                obj = {
+                        transactions: obj.data.transactions,
+                        balance: obj.data.balance
+                };
+                        str = CircularJSON.stringify(obj);
+                        console.log(str);
+                response.send(str);
+
+                })
+                .catch((err) => {
+                  console.log(err);
+                });
+
+});
+
+/* POST new transaction */
+app.post('/transactions', function(request, response) {
+
+        var obj = {
+                fromAddress: request.query.from,
+                toAddress: request.query.to,
+                amount: request.query.amount
+        }
+
+        axios.post(transactionsURL, obj)
+                  .then(function(res){
+                        var obj, str;
+                        obj = res;
+                        str = CircularJSON.stringify(obj.data);
+                        console.log(str);
+                    	response.send(str);
+                      
+                  })
+                  .catch((err) => {
+                          console.log(err);
+                  });
+});
+
+
+/* ----------------------------------------------------------------------------- *
+ *
+ * 		Helper functions
+ *
+ * ----------------------------------------------------------------------------- */
+
 
 /* Returns a list of small deposit transactions that sum to
  * an original amount
@@ -214,83 +274,32 @@ function getMixDeposits(transactions) {
 	return mixDeposits;
 }
 
-/* Recursiv 
-*/
-function depositToHouse(transactions)
+/* Recursively makes all deposits in a list of transactions */
+function deposit(transactions)
 {
-	axios.post(transactionsURL, obj)
-	      .then(function(res){
-	            var str;
-	            str = CircularJSON.stringify(res.data);
-	            
-	            depositToHouse(transactions.shift());
+	var depositObj = transactions[0];
 
+	axios.post(transactionsURL, depositObj)
+	      .then(function(res){
+	            var str, msg;
+	            str = CircularJSON.stringify(res.data);
+
+	            // Base case - list is empty
 	            if (transactions.length == 0) {
-	        		response.send(res);
+	            	msg = transactions.length + " completed successfully.";
+	        		console.log(msg); 
 	        	}
+	            
+	            console.log('Depositing: ' + JSON.stringify(depositObj)); 
+	            
+	            // Recurse on the rest of the list items
+	            deposit(transactions.shift());
 	          
 	      })
 	      .catch((err) => {
 	              console.log(err);
 	      });
 }
-
-
-/* Get the balance and list of transactions for an address
- * Query string parameter: address
- */
-app.get('/addresses', function(request, response) {
-
-        addressesURL += request.query.address;
-        axios.get(addressesURL)
-                .then(function(res){
-                var obj, str;
-                obj = res;
-                obj = {
-                        transactions: obj.data.transactions,
-                        balance: obj.data.balance
-                };
-                        str = CircularJSON.stringify(obj);
-                        console.log(str);
-                response.send(str);
-
-                })
-                .catch((err) => {
-                  console.log(err);
-                });
-
-});
-
-/* POST new transaction */
-app.post('/transactions', function(request, response) {
-
-        var obj = {
-                fromAddress: request.query.from,
-                toAddress: request.query.to,
-                amount: request.query.amount
-        }
-
-        axios.post(transactionsURL, obj)
-                  .then(function(res){
-                        var obj, str;
-                        obj = res;
-                        str = CircularJSON.stringify(obj.data);
-                        console.log(str);
-                    	response.send(str);
-                      
-                  })
-                  .catch((err) => {
-                          console.log(err);
-                  });
-});
-
-
-app.get('/app.js', function(request, response) {
-        response.sendFile(__dirname + '/client/js/app.js');
-});
-app.get('/mainCtrl.js', function(request, response) {
-        response.sendFile(__dirname + '/client/js/mainCtrl.js');
-});
 
 /* Listen on port 3000 */
 app.set('port', (process.env.PORT || 3000));
