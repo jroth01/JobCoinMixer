@@ -1,0 +1,44 @@
+Timer elapsed. Starting mixer to poll P2P network & tumble coins
+Initializing mixer...
+Transaction ledger as of February 13th 2017, 9:33:59 pm: 
+
+[{"timestamp":"2017-02-10T15:24:51.896Z","toAddress":"Justin's Address","amount":"20"},{"timestamp":"2017-02-10T15:25:18.266Z","fromAddress":"Justin's Address","toAddress":"Ben's Address","amount":"5"},{"timestamp":"2017-02-13T03:22:12.217Z","toAddress":"House1","amount":"1"},{"timestamp":"2017-02-13T03:22:17.843Z","toAddress":"House2","amount":"1"},{"timestamp":"2017-02-13T03:22:23.125Z","toAddress":"House3","amount":"1"},{"timestamp":"2017-02-13T03:22:29.321Z","toAddress":"House4","amount":"1"},{"timestamp":"2017-02-13T03:22:42.502Z","toAddress":"House5","amount":"1"},{"timestamp":"2017-02-13T03:22:49.179Z","toAddress":"House6","amount":"1"},{"timestamp":"2017-02-13T03:22:53.980Z","toAddress":"House7","amount":"1"},{"timestamp":"2017-02-13T03:23:00.520Z","toAddress":"House8","amount":"1"},{"timestamp":"2017-02-13T03:23:07.869Z","toAddress":"House9","amount":"1"},{"timestamp":"2017-02-13T03:23:12.435Z","toAddress":"House10","amount":"1"},{"timestamp":"2017-02-13T03:24:53.235Z","toAddress":"MixDeposit","amount":"1"},{"timestamp":"2017-02-13T22:15:59.259Z","toAddress":"B1","amount":"1"},{"timestamp":"2017-02-13T22:16:03.468Z","toAddress":"B2","amount":"1"},{"timestamp":"2017-02-13T22:16:08.259Z","toAddress":"B3","amount":"1"},{"timestamp":"2017-02-13T22:16:12.471Z","toAddress":"B4","amount":"1"},{"timestamp":"2017-02-13T22:16:20.234Z","toAddress":"B5","amount":"1"},{"timestamp":"2017-02-13T22:16:33.742Z","fromAddress":"Ben's Address","toAddress":"MixDeposit","amount":"5"},{"timestamp":"2017-02-13T22:46:56.817Z","fromAddress":"MixDeposit","toAddress":"House6","amount":"1.179560898832055"},{"timestamp":"2017-02-13T22:46:56.877Z","fromAddress":"MixDeposit","toAddress":"House6","amount":"1.179560898832055"},{"timestamp":"2017-02-13T22:46:56.889Z","fromAddress":"MixDeposit","toAddress":"House6","amount":"1.179560898832055"},{"timestamp":"2017-02-13T22:46:56.893Z","fromAddress":"MixDeposit","toAddress":"House6","amount":"1.179560898832055"},{"timestamp":"2017-02-13T22:46:56.896Z","fromAddress":"MixDeposit","toAddress":"House6","amount":"1.179560898832055"},{"timestamp":"2017-02-14T00:05:56.178Z","fromAddress":"B1","toAddress":"Justin's Address","amount":"1"},{"timestamp":"2017-02-14T00:06:03.811Z","fromAddress":"B2","toAddress":"Justin's Address","amount":"1"},{"timestamp":"2017-02-14T00:06:11.689Z","fromAddress":"B3","toAddress":"Justin's Address","amount":"1"},{"timestamp":"2017-02-14T00:06:21.435Z","fromAddress":"B4","toAddress":"Justin's Address","amount":"1"},{"timestamp":"2017-02-14T00:06:31.800Z","fromAddress":"B5","toAddress":"Justin's Address","amount":"1"},{"timestamp":"2017-02-14T02:31:09.789Z","fromAddress":"Justin's Address","toAddress":"Ben's Address","amount":"10"}]
+
+There are 1 mix deposits to be tumbled:
+[{"timestamp":"2017-02-13T22:16:33.742Z","fromAddress":"Ben's Address","toAddress":"MixDeposit","amount":"5"}]
+
+The sum of the transactions is 5
+Checking against original...
+VERIFIED: Matches original deposit amount of 5
+
+All houseDeposits:
+[{"fromAddress":"MixDeposit","toAddress":"House2","amount":1.1085873008150733},{"fromAddress":"MixDeposit","toAddress":"House4","amount":1.2356887305765878},{"fromAddress":"MixDeposit","toAddress":"House9","amount":1.2286614030855443},{"fromAddress":"MixDeposit","toAddress":"House3","amount":1.1271948318153735},{"fromAddress":"MixDeposit","toAddress":"House4","amount":0.2998677337074209}]
+
+Making incremental deposits to house addresses...
+Depositing: {"fromAddress":"MixDeposit","toAddress":"House2","amount":1.1085873008150733}
+Depositing: {"fromAddress":"MixDeposit","toAddress":"House4","amount":1.2356887305765878}
+Depositing: {"fromAddress":"MixDeposit","toAddress":"House9","amount":1.2286614030855443}
+Depositing: {"fromAddress":"MixDeposit","toAddress":"House3","amount":1.1271948318153735}
+Depositing: {"fromAddress":"MixDeposit","toAddress":"House4","amount":0.2998677337074209}
+
+Completed successfully!
+
+Mix deposits:
+[ { timestamp: '2017-02-13T22:16:33.742Z',
+    fromAddress: 'Ben\'s Address',
+    toAddress: 'MixDeposit',
+    amount: '5' } ]
+
+Accounts:
+[{"_id":"58a101ddac4beb2dbe47e76b","parentAddress":"Justin's Address","withdrawalAddresses":["Withdrawl1","Withdrawl2","Withdrawl3","Withdrawl4","Withdrawl5"]},{"_id":"58a102e86ed4ff2dd97369e4","parentAddress":"Ben's Address","withdrawalAddresses":["B1","B2","B3","B4","B5"]}]
+transactionInfo
+[{"amount":"5","fromAddress":"Ben's Address","withdrawalAddresses":["B1","B2","B3","B4","B5"]}]
+Return deposits:
+[[{"fromAddress":"House7","toAddress":"B3","amount":1.0794688230777574},{"fromAddress":"House7","toAddress":"B2","amount":1.1570673068660118},{"fromAddress":"House7","toAddress":"B2","amount":1.1203113835576946},{"fromAddress":"House7","toAddress":"B4","amount":1.214720525541402},{"fromAddress":"House7","toAddress":"B4","amount":0.4284319609571341}]]
+
+Making incremental return deposits to user withdrawal addresses...
+
+Depositing: [{"fromAddress":"House7","toAddress":"B3","amount":1.0794688230777574},{"fromAddress":"House7","toAddress":"B2","amount":1.1570673068660118},{"fromAddress":"House7","toAddress":"B2","amount":1.1203113835576946},{"fromAddress":"House7","toAddress":"B4","amount":1.214720525541402},{"fromAddress":"House7","toAddress":"B4","amount":0.4284319609571341}]
+
+Completed successfully!
+Done mixing!

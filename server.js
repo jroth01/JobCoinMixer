@@ -120,6 +120,9 @@ app.get('/addresses', function(request, response) {
 
 });
 
+/* Get the list of withdrawal accounts in our mixer's database
+ * Endpoint listed here for development purposes only 
+ */
 app.get('/accounts', function(request, response) {
 
     // Get withdrawl addresses stored in db for each user
@@ -134,7 +137,6 @@ app.get('/accounts', function(request, response) {
   });  
 
 });
-
 
 /* POST new transaction */
 app.post('/transactions', function(request, response) {
