@@ -357,21 +357,20 @@ function deposit(transactions, destination)
 
   var depositObj = deposits;
   console.log('Depositing: ' + JSON.stringify(depositObj)); 
-  transactions.shift();    
+
+  // comment these out for production
+  transactions.shift();  
   deposit(transactions);
+  
+  return;
 
-  return; 
-
-  var file, obj, now, str, msg;
   axios.post(transactionsURL, depositObj)
         .then(function(res){
-              
-              //str = CircularJSON.stringify(res.data);
-
-              console.log('Deposited: ' + JSON.stringify(depositObj)); 
-              
-              // Recurse on the rest of the list items
-              deposit(deposits.shift());
+          
+              console.log('Successfully deposited: ' + JSON.stringify(depositObj)); 
+              transactions.shift();  
+                
+                deposit(transactions);
             
         })
         .catch((err) => {
