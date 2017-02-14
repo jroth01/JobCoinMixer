@@ -31,6 +31,8 @@ The following steps are triggered by a timer every n seconds:
 4. Make the small incremental transactions from the mixer's deposit address to various house addresses in a randomized, staggered manner  
 5. Make a final set of small incremental transactions from the house addresses back to each user's withdrawal addresses in a randomized, staggered manner
 
+This particular JobCoin mixer does not take a fee of any kind.
+
 #Project Structure
 server.js contains basic configuration, as well as the POST /register endpoint
 
