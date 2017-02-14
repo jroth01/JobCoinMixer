@@ -224,12 +224,15 @@ function makeReturnDeposits(mixDeposits) {
           returnDeposits.push(transaction);
         });
 
+        returnDeposits = returnDeposits[0];
         console.log('Return deposits:');
         console.log(JSON.stringify(returnDeposits) + '\n');
+
 
         // make incremental return deposits to the user's withdrawl accounts
         returnDeposits.map((transactions) => {
           console.log('Making incremental return deposits to user withdrawal addresses...');
+          console.log('Sum of the return deposits is ' + sum(returnDeposits));
           deposit(returnDeposits, 'user');
         });
 
@@ -360,17 +363,16 @@ function deposit(transactions, destination)
 
   // comment these out for production
   transactions.shift();  
-  deposit(transactions);
+  //deposit(transactions);
   
-  return;
+  //return;
 
   axios.post(transactionsURL, depositObj)
         .then(function(res){
           
               console.log('Successfully deposited: ' + JSON.stringify(depositObj)); 
-              transactions.shift();  
-                
-                deposit(transactions);
+               
+              return deposit(transactions);
             
         })
         .catch((err) => {
