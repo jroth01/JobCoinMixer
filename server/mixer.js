@@ -1,9 +1,3 @@
-var dbURL = 'mongodb://admin:funkyfresh@ds147799.mlab.com:47799/heroku_vm2rx1sr'
-var mongoUri = process.env.MONGODB_URI || process.env.MONGOLAB_URI || process.env.MONGOHQ_URL || dbURL;
-var MongoClient = require('mongodb').MongoClient, format = require('util').format;
-var db = MongoClient.connect(mongoUri, function(error, databaseConnection) {
-  db = databaseConnection;
-});
 
 /* ----------------------------------------------------------------------------- *
  *
@@ -38,6 +32,14 @@ module.exports = function(app){
 
 
 
+var dbURL = 'mongodb://admin:funkyfresh@ds147799.mlab.com:47799/heroku_vm2rx1sr';
+var mongoUri = process.env.MONGODB_URI || process.env.MONGOLAB_URI || process.env.MONGOHQ_URL || dbURL;
+var MongoClient = require('mongodb').MongoClient, format = require('util').format;
+var db = MongoClient.connect(mongoUri, function(error, databaseConnection) {
+
+  db = databaseConnection;
+
+});
 
 
 
@@ -48,15 +50,15 @@ module.exports = function(app){
  * ----------------------------------------------------------------------------- */
 
 // set timer interval to poll the P2P network and mix every n seconds
-var seconds = 5; 
+var seconds = 2; 
 var milliseconds = seconds * 1000;
 
-// var timer = setInterval(function() {
-//   console.log("Timer elapsed. Starting mixer to poll P2P network & tumble coins");
-//   mixJobCoins();
-// }, milliseconds);
+var timer = setInterval(function() {
+  console.log("Timer elapsed. Starting mixer to poll P2P network & tumble coins");
+  mixJobCoins();
+}, milliseconds);
 
-mixJobCoins();
+//mixJobCoins();
 
 /* ----------------------------------------------------------------------------- *
  *
@@ -89,30 +91,42 @@ function mixJobCoins() {
 
     // identify transactions sent to deposit address
     mixDeposits = getMixDeposits(res.data, lastMixDate);
+    mixDeposits = removeNull(mixDeposits);
 
-    console.log('Mix deposits:');
+    console.log('There are ' + mixDeposits.length + ' mix deposits to be tumbled:');
+
     console.log(JSON.stringify(mixDeposits));
 
     if (mixDeposits.length > 0) {
 
-      mixDeposits = removeNull(mixDeposits);
-
       // for each amount sent to deposit address,
       // generate incremental portions of that amount
       mixDeposits.map((deposit) => {
-        console.log('here is the deposit');
-        console.log(deposit);
+
+        console.log('here is the deposit\n' + deposit);
+
         houseDeposits = generateDeposits(deposit["amount"], depositAddress, houseAddresses);
+
+         console.log('The sum of the transactions is ' + sum(houseDeposits));
+         console.log('Checking against original...');
+
+         if (sum(houseDeposits) == deposit["amount"]) {
+            console.log('VERIFIED: Matches original deposit amount of ' + deposit["amount"]);
+         } else {
+            console.log('DISCREPANCY: original deposit amount was ' + deposit["amount"]);
+         }
         allHouseDeposits.push(houseDeposits);
+
       });
 
+      allHouseDeposits = allHouseDeposits[0];
       console.log('All houseDeposits:');
       console.log(JSON.stringify(allHouseDeposits));
-      console.log('The sum of the transactions is ' + sum(allHouseDeposits[0]) )
+     
       // make all incremental deposits to the house accounts
       houseDeposits.map((transactions) => {
         console.log('Making incremental deposits to house addresses...');
-        deposit(allHouseDeposits[0], 'house');
+        deposit(allHouseDeposits, 'house');
       });
 
       // get return deposit transactions 
@@ -123,8 +137,6 @@ function mixJobCoins() {
         console.log('Making incremental return deposits to user withdrawal addresses...');
         deposit(returnDeposits, 'user');
       });
-
-
 
       console.log('Done mixing!');
 
@@ -207,37 +219,48 @@ function getReturnDeposits(mixDeposits) {
 function getReturnTransactionInfo(mixDeposits) {
 
   var withdrawalAddresses;
-  var transactionInfo = []
+  var transactionInfo = [];
 
   // Get withdrawl addresses stored in db for each user
   db.collection('accounts', function(er, collection) {
-      collection.find().toArray(function(err, docs) {
-        if (!err) {
-           withdrawalAddresses = docs;
-        } else {
-           return {};
-        }
-      });
-    });
+    collection.find().toArray(function(err, docs) {
+      if (err) {
+          console.log(err);
+      } else {
+        accounts = docs;
+        console.log('Mix deposits:')
+        console.log(mixDeposits);
+        console.log('accounts:')
+        console.log(JSON.stringify(accounts));
 
-  // Match the user with their withdrawal addresses
-  mixDepositsAddresses.map((item) => {
-    withdrawalAddresses.map((withdrawl) => {
+        // Match the user with their withdrawal addresses
+        mixDeposits.map((item) => {
+          accounts.map((withdrawl) => {
+           
 
-      if (item.fromAddress === withdrawl.parentAddress) {
 
-        var returnInfo = {
-          "amount": item.amount,
-          "fromAddress": item.fromAddress,
-          "withdrawalAddresses": withdrawl.withdrawalAddresses
-        }
+            if (item.fromAddress === withdrawl.parentAddress) {
+              var returnInfo = {
+              "amount": item.amount,
+              "fromAddress": item.fromAddress,
+              "withdrawalAddresses": withdrawl.withdrawalAddresses
+              }
+              transactionInfo.push(returnInfo);
+            }
 
-        transactionInfo.push(returnInfo);
+          });
+        });
+
+        console.log('transactionInfo');
+
+        console.log(JSON.stringify(transactionInfo));
+        
+        return transactionInfo;
       }
     });
-  });
+  });   
 
-  return transactionInfo;
+
 }
 
 
@@ -304,7 +327,6 @@ function generateDeposits(originalAmount, fromAddress, destinationList) {
 
   // if there's a difference, add it to the list of deposits
   if (difference > 0) {
-    console.log('Difference is ' + difference);
     destinationIndex = randomInt(0, destinationList.length -1 );
     to = destinationList[destinationIndex];
     deposit = createDepositObj(from, to, difference);

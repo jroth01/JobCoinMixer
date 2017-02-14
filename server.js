@@ -12,7 +12,7 @@ var validator = require('validator');
 var axios = require('axios');
 var CircularJSON = require('circular-json');
 
-var dbURL = 'mongodb://admin:funkyfresh@ds147799.mlab.com:47799/heroku_vm2rx1sr'
+var dbURL = 'mongodb://admin:funkyfresh@ds147799.mlab.com:47799/heroku_vm2rx1sr';
 var mongoUri = process.env.MONGODB_URI || process.env.MONGOLAB_URI || process.env.MONGOHQ_URL || dbURL;
 var MongoClient = require('mongodb').MongoClient, format = require('util').format;
 var db = MongoClient.connect(mongoUri, function(error, databaseConnection) {
@@ -121,6 +121,23 @@ app.get('/addresses', function(request, response) {
         });
 
 });
+
+app.get('/accounts', function(request, response) {
+
+    // Get withdrawl addresses stored in db for each user
+  db.collection('accounts', function(er, collection) {
+    collection.find().toArray(function(err, docs) {
+      if (err) {
+          console.log(err);
+      } else {
+        response.send(JSON.stringify(docs));
+      }
+    });
+  });  
+
+});
+
+ 
 
 /* POST new transaction */
 app.post('/transactions', function(request, response) {
