@@ -33,6 +33,7 @@ The following steps are triggered by a timer every n seconds:
 
 #Project Structure
 server.js contains basic configuration, as well as the POST /register endpoint
+
 mixer.js is a separate module that handles the business logic of the mixer
 
 # Client usage: POST /register
@@ -41,13 +42,26 @@ The body of the POST request to /register must contain the following JSON
 withdrawalAddresses : an array of withdrawl addresses
 parentAddress: the address of the parent account
 
+Example JSON:
+
+<pre><code>
+{
+	"parentAddress": "Ben's Address",
+	"withdrawlAddresses": ["B1","B2","B3", "B4", "B5"]
+}
+</code></pre>
+
 The response to the POST request contains the mixer's public deposit address
 
 # Running the server
 
-To start the server 
+To start the server, cd into the project's directory and execute the following
+commands:
 
 npm install
 
 node server.js
+
+The app will run on localhost:3000. As soon as the server is started, a setInterval function will
+tell the mixer to poll the P2P network and tumble coins as necessary every n seconds.
 
