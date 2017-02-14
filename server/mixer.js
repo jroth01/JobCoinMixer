@@ -1,10 +1,8 @@
-
 /* ----------------------------------------------------------------------------- *
  *
  *    JobCoin API Specific Setup
  *
  * ----------------------------------------------------------------------------- */
-
 
 /* JobCoin API URLS */
 var addressesURL= 'http://jobcoin.projecticeland.net/intransfusible/api/addresses/';
@@ -21,6 +19,19 @@ var CircularJSON = require('circular-json');
 var moment = require('moment');
 var jsonfile = require('jsonfile')
  
+/* ----------------------------------------------------------------------------- *
+ *
+ *    MongoDB Config
+ *
+ * ----------------------------------------------------------------------------- */
+
+var dbURL = 'mongodb://admin:funkyfresh@ds147799.mlab.com:47799/heroku_vm2rx1sr'
+var mongoUri = process.env.MONGODB_URI || process.env.MONGOLAB_URI || process.env.MONGOHQ_URL || dbURL;
+var MongoClient = require('mongodb').MongoClient, format = require('util').format;
+var db = MongoClient.connect(mongoUri, function(error, databaseConnection) {
+  db = databaseConnection;
+});
+
 
 /* ----------------------------------------------------------------------------- *
  *
@@ -30,27 +41,8 @@ var jsonfile = require('jsonfile')
 
 module.exports = function(app){
 
-
-
-var dbURL = 'mongodb://admin:funkyfresh@ds147799.mlab.com:47799/heroku_vm2rx1sr';
-var mongoUri = process.env.MONGODB_URI || process.env.MONGOLAB_URI || process.env.MONGOHQ_URL || dbURL;
-var MongoClient = require('mongodb').MongoClient, format = require('util').format;
-var db = MongoClient.connect(mongoUri, function(error, databaseConnection) {
-
-  db = databaseConnection;
-
-});
-
-
-
-/* ----------------------------------------------------------------------------- *
- *
- *    Timer Function - calls mixer function every n seconds
- *
- * ----------------------------------------------------------------------------- */
-
-// set timer interval to poll the P2P network and mix every n seconds
-var seconds = 2; 
+/* Set timer interval to poll the P2P network and mix as necessary every n seconds */
+var seconds = 5; 
 var milliseconds = seconds * 1000;
 
 var timer = setInterval(function() {
@@ -58,21 +50,17 @@ var timer = setInterval(function() {
   mixJobCoins();
 }, milliseconds);
 
-//mixJobCoins();
 
 /* ----------------------------------------------------------------------------- *
  *
  *    Mixer function
  *
+ *    1. Parses out user deposits to mixer's deposit address from the P2P network
+ *    2. Moves BTC from deposit address to house addresses
+ *    3. Moves BTC from house addresses back to each user's withdrawl addresses
+ *
  * ----------------------------------------------------------------------------- */
 
-/* 
- * Parse out deposits to mixer's deposit address from the P2P network
- * Moves BTC from deposit address to house addresses
- * Moves BTC from house addresses back to user's withdrawl addresses
- *
- * Parameter: lastMixDate, the timestamp of when the mixer last tumbled JobCoins
- */
 function mixJobCoins() {
   console.log('Mixing...');
   axios.get(transactionsURL)
@@ -82,29 +70,42 @@ function mixJobCoins() {
     var withdrawalAddresses = [];
     var returnDeposits = [];
     var lastMixDate, mixDeposits, houseDeposits, from, to, str;
-    str = CircularJSON.stringify(res.data);
-    
-    var now = moment().format('MMMM Do YYYY, h:mm:ss a');
-    console.log('Transaction ledger as of ' + now + ': \n' + str);
+
 
     lastMixDate = getLastMixDate();
 
-    // identify transactions sent to deposit address
+    /* ----------------------------------------------------------------------------- *
+     *
+     *   1. Identify the number of deposits sent to our mixer that need to be tumbled
+     *
+     * ----------------------------------------------------------------------------- */
+
+     /* Poll the P2P network for transactions */
+
+    str = CircularJSON.stringify(res.data);
+    var now = moment().format('MMMM Do YYYY, h:mm:ss a');
+    console.log('Transaction ledger as of ' + now + ': \n' + str);
+
+    /* Parse out deposits sent to our mixer */
+
     mixDeposits = getMixDeposits(res.data, lastMixDate);
-    mixDeposits = removeNull(mixDeposits);
 
     console.log('There are ' + mixDeposits.length + ' mix deposits to be tumbled:');
-
     console.log(JSON.stringify(mixDeposits));
 
-    if (mixDeposits.length > 0) {
+     /* 
+     * For each original amount sent to our deposit address,
+     * generate small incremental transactions that sum to the original amount
+     *
+     * Prepare them to be sent from the mixer's depositt address to
+     * various house addresses
+     */
+    if (mixDeposits != undefined && mixDeposits.length > 0) {
 
-      // for each amount sent to deposit address,
-      // generate incremental portions of that amount
+
       mixDeposits.map((deposit) => {
 
-        console.log('here is the deposit\n' + deposit);
-
+        console.log('Here is the deposit\n' + deposit);
         houseDeposits = generateDeposits(deposit["amount"], depositAddress, houseAddresses);
 
          console.log('The sum of the transactions is ' + sum(houseDeposits));
@@ -123,22 +124,26 @@ function mixJobCoins() {
       console.log('All houseDeposits:');
       console.log(JSON.stringify(allHouseDeposits));
      
-      // make all incremental deposits to the house accounts
+      /* ----------------------------------------------------------------------------- *
+       *
+       *   2. Make the small incremental transactions from the mixer's deposit                   
+       *   address to various house addresses in a random manner  
+       *
+       * ----------------------------------------------------------------------------- */
+
       houseDeposits.map((transactions) => {
         console.log('Making incremental deposits to house addresses...');
         deposit(allHouseDeposits, 'house');
       });
 
-      // get return deposit transactions 
-      returnDeposits = getReturnDeposits(mixDeposits);
+      /* ----------------------------------------------------------------------------- *
+       *
+       *   3. Make a final set of small incremental transactions from the house addresses                   
+       *   back to each user's withdrawal addresses 
+       *
+       * ----------------------------------------------------------------------------- */
 
-      // make incremental return deposits to the user's withdrawl accounts
-      returnDeposits.map((transactions) => {
-        console.log('Making incremental return deposits to user withdrawal addresses...');
-        deposit(returnDeposits, 'user');
-      });
-
-      console.log('Done mixing!');
+      makeReturnDeposits(mixDeposits);
 
     }
     else {
@@ -152,13 +157,8 @@ function mixJobCoins() {
 
 }
 
-// Returns array with null elements removed
-function removeNull(arr) {
+function getLastMixDate() {
 
-  function rmNull(item) {
-      return item != null && item != undefined;
-  }
-  return arr.filter(rmNull);
 }
 
 /* ----------------------------------------------------------------------------- *
@@ -167,56 +167,11 @@ function removeNull(arr) {
  *
  * ----------------------------------------------------------------------------- */
 
-/* Stores the timestamp of when the mixer most recently
- * tumbled JobCoins
- *
- * Saves the timestamp to a file on the server-side
- */
-function setLastMixDate() {
-
-
-}
-
-/* Stores the timestamp of when the mixer most recently
- * tumbled JobCoins
- *
- * Saves the timestamp to a file on the server-side
- */
-function getLastMixDate() {
-
-
-}
-
-/* Verifies mixed transactions
- *
- */
-function verifyMix(mixDeposits) {
-
-}
 
 /* Returns an array of return deposit transactions 
  * to be sent from various house addresses to a user's withdrawal addresses
  */
-function getReturnDeposits(mixDeposits) {
-    var returnTransactionInfo = [];
-  var returnDeposits = [];
-  var deposit, houseIndex;
-  returnTransactionInfo = getReturnTransactionInfo(mixDeposits);
-
-  returnTransactionInfo.map((info) => {
-    houseIndex = randomInt (0, houseAddresses.length);
-    deposit = generateDeposits(info.amount, houseAddresses[houseIndex], 
-                  info.withdrawalAddresses)
-    returnDeposits.push(deposit);
-  });
-
-  return returnDeposits;
-}
-
-/* Returns an array of objects that map parent addresses to their 
- * corresponding withdrawal addresses
- */
-function getReturnTransactionInfo(mixDeposits) {
+function makeReturnDeposits(mixDeposits) {
 
   var withdrawalAddresses;
   var transactionInfo = [];
@@ -233,17 +188,21 @@ function getReturnTransactionInfo(mixDeposits) {
         console.log('accounts:')
         console.log(JSON.stringify(accounts));
 
-        // Match the user with their withdrawal addresses
+        // For each user deposit
         mixDeposits.map((item) => {
-          accounts.map((withdrawl) => {
-           
 
-
-            if (item.fromAddress === withdrawl.parentAddress) {
+          // search the accounts in our mixer's database
+          accounts.map((account) => {
+        
+            /* If we match a user's address to a parent address in our db
+             * Make note of how much total to give back, and
+             * remember the user's array of withdrawal addresses
+             */
+            if (item.fromAddress === account.parentAddress) {
               var returnInfo = {
               "amount": item.amount,
               "fromAddress": item.fromAddress,
-              "withdrawalAddresses": withdrawl.withdrawalAddresses
+              "withdrawalAddresses": account.withdrawalAddresses
               }
               transactionInfo.push(returnInfo);
             }
@@ -252,10 +211,30 @@ function getReturnTransactionInfo(mixDeposits) {
         });
 
         console.log('transactionInfo');
-
         console.log(JSON.stringify(transactionInfo));
         
-        return transactionInfo;
+        var returnTransactionInfo = transactionInfo;
+        var returnDeposits = [];
+        var transaction, houseIndex;
+
+        returnTransactionInfo.map((info) => {
+          houseIndex = randomInt (0, houseAddresses.length);
+          transaction = generateDeposits(info.amount, houseAddresses[houseIndex], 
+                        info.withdrawalAddresses)
+          returnDeposits.push(transaction);
+        });
+
+        console.log('Return deposits:');
+        console.log(JSON.stringify(returnDeposits) + '\n');
+
+        // make incremental return deposits to the user's withdrawl accounts
+        returnDeposits.map((transactions) => {
+          console.log('Making incremental return deposits to user withdrawal addresses...');
+          deposit(returnDeposits, 'user');
+        });
+
+        console.log('Done mixing!');
+
       }
     });
   });   
@@ -280,6 +259,7 @@ function getMixDeposits(transactions, lastMixDate) {
   });
 
   if (!isNull(mixDeposits))  {
+    mixDeposits = removeNull(mixDeposits);
     return mixDeposits;
   }
   else {
@@ -431,6 +411,15 @@ function isNull(arr) {
         return false;
   }
   return true;
+}
+
+// Returns array with null elements removed
+function removeNull(arr) {
+
+  function rmNull(item) {
+      return item != null && item != undefined;
+  }
+  return arr.filter(rmNull);
 }
 
 

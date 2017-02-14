@@ -37,12 +37,10 @@ app.listen(app.get('port'), function() {
 
 /* ----------------------------------------------------------------------------- *
  *
- * 		Database Config and Mixer Modules
+ * 		Mixer Module
  *
  * ----------------------------------------------------------------------------- */
 
-/* Database Config */
-require('./server/config')(app);
 
 /* Mixer Module */
 require('./server/mixer')(app);
@@ -137,7 +135,6 @@ app.get('/accounts', function(request, response) {
 
 });
 
- 
 
 /* POST new transaction */
 app.post('/transactions', function(request, response) {
