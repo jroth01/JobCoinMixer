@@ -38,9 +38,12 @@ mixer.js is a separate module that handles the business logic of the mixer
 
 # Client usage: POST /register
 
-The body of the POST request to /register must contain the following JSON
-withdrawalAddresses : an array of withdrawl addresses
-parentAddress: the address of the parent account
+The body of the POST request to /register must contain the following JSON:
+
+parentAddress - the address of the parent account
+
+withdrawalAddresses - an array of withdrawl addresses
+
 
 Example JSON:
 
