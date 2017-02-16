@@ -364,7 +364,7 @@ function deposit(transactions)
               console.log('making deposit after delay of ' + seconds + ' seconds');
 
               var timer = setTimeout(function() {
-                console.log("Timer elapsed. Starting mixer to poll P2P network & tumble coins");
+              console.log("Timer elapsed. Starting mixer to poll P2P network & tumble coins");
 
                   // Recurse on the truncated array
                   return deposit(transactions);
@@ -376,7 +376,38 @@ function deposit(transactions)
                 console.log(err);
         });
 }
-           
+ 
+ /* Redistributes the sum of house addresses among those addresses */
+ function redistribute(destinations) {
+
+    // Base case - list is empty 
+    if (destinations === undefined) {
+      msg = "Completed successfully!";
+      return;
+    }
+
+    // Remove the first element of the array
+    destinations.shift();  
+
+    addressesURL += address;
+
+    // Get the balance and 
+    axios.get(addressesURL)
+      .then(function(res){
+        var obj, str;
+        obj = res;
+        sum += obj.data.balance;
+
+        // Recurse on the truncated array
+        return redistribute(destinations) ;
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+
+ }        
+
+
 /* ----------------------------------------------------------------------------- *
  *
  *    Utility functions

@@ -6,7 +6,7 @@ Master branch contains version with many console.logs in /server/mixer.js for de
 no-logs branch contains version of /server/mixer.js without console.logs for easier reading.
 
 #Specification
-1. User must provide a list of withdrawl addresses via POST /mix
+1. User must provide a list of withdrawal addresses via POST /mix
 
 2. Response from the post request includes the mixer's deposit address
 
@@ -56,7 +56,7 @@ Example JSON:
 <pre><code>
 {
 	"parentAddress": "Ben's Address",
-	"withdrawlAddresses": ["B1","B2","B3", "B4", "B5"]
+	"withdrawalAddresses": ["B1","B2","B3", "B4", "B5"]
 }
 </code></pre>
 
