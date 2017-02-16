@@ -264,7 +264,7 @@ function getMixDeposits(transactions, lastMixDate) {
 
     var timestamp = new Date(item.timestamp);
     lastMixDate = new Date(lastMixDate);
-    
+
     // true if deposit was made after last mix
     newItem = ( timestamp > lastMixDate);
 
@@ -379,10 +379,18 @@ function deposit(transactions, destination)
               
               var seconds = randomInt(0, 10); 
               var milliseconds = seconds * 1000;
+              /* Set timer interval to poll the P2P network and mix as necessary every n seconds */
+              console.log('making deposit after delay of ' + seconds + ' seconds');
 
+              var timer = setTimeout(function() {
+                console.log("Timer elapsed. Starting mixer to poll P2P network & tumble coins");
+
+                  // Recurse on the truncated array
+                  return deposit(transactions);
+
+              }, milliseconds);
              
-              // Recurse on the truncated array
-              return deposit(transactions);
+            
 
 
             
