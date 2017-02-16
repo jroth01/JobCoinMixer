@@ -389,10 +389,6 @@ function deposit(transactions, destination)
                   return deposit(transactions);
 
               }, milliseconds);
-             
-            
-
-
             
         })
         .catch((err) => {
