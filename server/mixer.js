@@ -32,7 +32,6 @@ var db = MongoClient.connect(mongoUri, function(error, databaseConnection) {
   db = databaseConnection;
 });
 
-
 /* ----------------------------------------------------------------------------- *
  *
  *    MIXER MODULE
@@ -55,7 +54,6 @@ var timer = setInterval(function() {
 }, milliseconds);
 
 //mixJobCoins();
-
 
 /* ----------------------------------------------------------------------------- *
  *
@@ -96,7 +94,6 @@ function mixJobCoins() {
     /* Parse out deposits sent to our mixer 
      * Only tumble if deposit has not already been mixed
      */
-
      mixDeposits = getMixDeposits(res.data, lastMixDate);
    
      console.log("here are mix deposits");
@@ -173,7 +170,6 @@ function mixJobCoins() {
  *    Helper functions
  *
  * ----------------------------------------------------------------------------- */
-
 
 /* Returns an array of return deposit transactions 
  * to be sent from various house addresses to a user's withdrawal addresses
@@ -356,7 +352,6 @@ function deposit(transactions, destination)
      * Else we finished deposits from mixer to
      * house accounts
      */
-
      var now = Date.now();
      lastMixDate = now
 
@@ -439,6 +434,5 @@ function removeNull(arr) {
   }
   return arr.filter(rmNull);
 }
-
 
 } /* end module.exports */
