@@ -99,9 +99,8 @@ function mixJobCoins() {
 
      mixDeposits = getMixDeposits(res.data, lastMixDate);
    
-
      console.log("here are mix deposits");
-    console.log(JSON.stringify( mixDeposits));
+     console.log(JSON.stringify( mixDeposits));
   
      /* 
      * For each user's original amount sent to our deposit address,
@@ -360,8 +359,7 @@ function deposit(transactions, destination)
      */
 
      var now = Date.now();
-    lastMixDate = now
-
+     lastMixDate = now
 
     return;
   }
