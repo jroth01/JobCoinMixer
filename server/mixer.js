@@ -39,6 +39,10 @@ var db = MongoClient.connect(mongoUri, function(error, databaseConnection) {
  *
  * ----------------------------------------------------------------------------- */
 
+/* Retrieve time of last mix */
+lastMixDate =  Date.now();
+lastHouseDeposit = Date.now();
+
 module.exports = function(app){
 
 /* Set timer interval to poll the P2P network and mix as necessary every n seconds */
@@ -49,6 +53,8 @@ var timer = setInterval(function() {
   console.log("Timer elapsed. Starting mixer to poll P2P network & tumble coins");
   mixJobCoins();
 }, milliseconds);
+
+//mixJobCoins();
 
 
 /* ----------------------------------------------------------------------------- *
@@ -79,8 +85,7 @@ function mixJobCoins() {
     var allHouseDeposits = [];
     var withdrawalAddresses = [];
     var returnDeposits = [];
-    var lastMixDate, mixDeposits, houseDeposits, from, to, str;
-    lastMixDate = getLastMixDate();
+    var mixDeposits, houseDeposits, from, to, str;
 
     /* Get response data containing transactions */
 
@@ -88,13 +93,16 @@ function mixJobCoins() {
     var now = moment().format('MMMM Do YYYY, h:mm:ss a');
     console.log('Transaction ledger as of ' + now + ': \n' + str);
 
-    /* Parse out deposits sent to our mixer */
+    /* Parse out deposits sent to our mixer 
+     * Only tumble if deposit has not already been mixed
+     */
 
-    mixDeposits = getMixDeposits(res.data, lastMixDate);
+     mixDeposits = getMixDeposits(res.data, lastMixDate);
+   
 
-    console.log('There are ' + mixDeposits.length + ' mix deposits to be tumbled:');
-    console.log(JSON.stringify(mixDeposits));
-
+     console.log("here are mix deposits");
+    console.log(JSON.stringify( mixDeposits));
+  
      /* 
      * For each user's original amount sent to our deposit address,
      * generate small incremental transactions that sum to the original amount
@@ -103,6 +111,10 @@ function mixJobCoins() {
      * address to house addresses
      */
     if (mixDeposits != undefined && mixDeposits.length > 0) {
+
+      console.log('There are ' + mixDeposits.length + ' mix deposits to be tumbled:');
+      console.log(JSON.stringify(mixDeposits));
+
       mixDeposits.map((deposit) => {
 
       console.log('Here is the deposit\n' + deposit);
@@ -157,10 +169,6 @@ function mixJobCoins() {
 
 }
 
-function getLastMixDate() {
-
-}
-
 /* ----------------------------------------------------------------------------- *
  *
  *    Helper functions
@@ -185,7 +193,7 @@ function makeReturnDeposits(mixDeposits) {
         accounts = docs;
         console.log('Mix deposits:')
         console.log(mixDeposits);
-        console.log('accounts:')
+        console.log('accounts:');
         console.log(JSON.stringify(accounts));
 
         // For each user deposit
@@ -250,11 +258,20 @@ function getMixDeposits(transactions, lastMixDate) {
   var match, newItem, fromSpecified;
 
   var mixDeposits = transactions.map((item) => {
+
+    // true if transaction is sent to mixer
     match = (item.toAddress === depositAddress);
-    newItem = (item.timestamp > lastMixDate);
+
+    var timestamp = new Date(item.timestamp);
+    lastMixDate = new Date(lastMixDate);
+    
+    // true if deposit was made after last mix
+    newItem = ( timestamp > lastMixDate);
+
+    // true if the deposit has 
     fromSpecified = (item.fromAddress != undefined);
 
-      if ( match && fromSpecified) {
+      if ( match && newItem && fromSpecified) {
         return item;
       }
   });
@@ -289,7 +306,7 @@ function generateDeposits(originalAmount, fromAddress, destinationList) {
     depositAmount = randomNum(1,upperBound);
 
     // pick a random destination address to deposit to
-    destinationIndex = randomInt(0, destinationList.length -1);
+    destinationIndex = randomInt(0, destinationList.length);
 
     // specify the destination address
     to = destinationList[destinationIndex];
@@ -309,7 +326,7 @@ function generateDeposits(originalAmount, fromAddress, destinationList) {
   // if there's a difference, add it to the list of deposits
   if (difference > 0) {
 
-    destinationIndex = randomInt(0, destinationList.length -1 );
+    destinationIndex = randomInt(0, destinationList.length);
 
     to = destinationList[destinationIndex];
 
@@ -325,10 +342,10 @@ function generateDeposits(originalAmount, fromAddress, destinationList) {
 function deposit(transactions, destination)
 {
 
-  /* Begin with a list of transactions*/
+  // Begin with a list of transactions
   var deposits = transactions[0];
 
-  /* Base case - list is empty */
+  // Base case - list is empty 
   if (deposits === undefined) {
 
     msg = "Completed successfully!";
@@ -341,38 +358,33 @@ function deposit(transactions, destination)
      * Else we finished deposits from mixer to
      * house accounts
      */
-    if (destination === 'User') {
-      file = './server/lastMix.json';
-    } else {
-      file = './server/lastHouseDeposit.json';
-    }
 
-    var now = Date.now();
-    obj = {
-      timestamp: now
-    };
+     var now = Date.now();
+    lastMixDate = now
 
-    jsonfile.writeFile(file, obj, function (err) {
-        console.error(err);
-    })
+
     return;
   }
 
   var depositObj = deposits;
   console.log('Depositing: ' + JSON.stringify(depositObj)); 
 
-  // comment these out for production
+  // Remove the first element of the array
   transactions.shift();  
-  //deposit(transactions);
-  
-  //return;
 
   axios.post(transactionsURL, depositObj)
         .then(function(res){
           
               console.log('Successfully deposited: ' + JSON.stringify(depositObj)); 
-               
+              
+              var seconds = randomInt(0, 10); 
+              var milliseconds = seconds * 1000;
+
+             
+              // Recurse on the truncated array
               return deposit(transactions);
+
+
             
         })
         .catch((err) => {
