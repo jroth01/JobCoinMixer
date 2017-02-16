@@ -8,14 +8,13 @@
 var addressesURL= 'http://jobcoin.projecticeland.net/intransfusible/api/addresses/';
 var transactionsURL = 'http://jobcoin.projecticeland.net/intransfusible/api/transactions';
 
-/* Mixer Address to which coins will be sent */
+/* Mixer Address to which users send their coins */
 var depositAddress = 'MixDeposit';
 var houseAddresses = ["House1","House2","House3","House4","House5","House6",
            "House7", "House8","House9","House10"];
 
 var axios = require('axios');
 var CircularJSON = require('circular-json');
-
 var moment = require('moment');
 var jsonfile = require('jsonfile')
  
@@ -431,7 +430,6 @@ function isNull(arr) {
 
 // Returns array with null elements removed
 function removeNull(arr) {
-
   function rmNull(item) {
       return item != null && item != undefined;
   }
