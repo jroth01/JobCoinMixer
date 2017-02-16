@@ -367,7 +367,8 @@ function deposit(transactions)
               
               var seconds = randomInt(0, 10); 
               var milliseconds = seconds * 1000;
-              /* Set timer interval to poll the P2P network and mix as necessary every n seconds */
+             
+              /* Set timer delay for each deposit */
               console.log('making deposit after delay of ' + seconds + ' seconds');
 
               var timer = setTimeout(function() {
