@@ -235,7 +235,6 @@ function makeReturnDeposits(mixDeposits) {
         console.log('Return deposits:');
         console.log(JSON.stringify(returnDeposits) + '\n');
 
-
         // make incremental return deposits to the user's withdrawl accounts
         returnDeposits.map((transactions) => {
           console.log('Making incremental return deposits to user withdrawal addresses...');
