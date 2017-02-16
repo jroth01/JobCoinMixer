@@ -1,9 +1,9 @@
 #JobCoin Mixer
 A JobCoin tumbler for Gemini 
 
-Master branch contains version with many console.logs in /server/mixer.js for demonstration purposes / reasoning about correctness.
+Master branch contains version with many console.logs in /server/mixer.js for demonstration purposes.
 
-no-logs branch contains version of /server/mixer.js without console.logs for easier reading
+no-logs branch contains version of /server/mixer.js without console.logs for easier reading.
 
 #Specification
 1. User must provide a list of withdrawl addresses via POST /mix
