@@ -172,70 +172,63 @@ function makeReturnDeposits(mixDeposits) {
   var withdrawalAddresses;
   var transactionInfo = [];
 
-  // Get withdrawl addresses stored in db for each user
-  db.collection('accounts', function(er, collection) {
-    collection.find().toArray(function(err, docs) {
-      if (err) {
-          console.log(err);
-      } else {
-        accounts = docs;
-        console.log('Mix deposits:')
-        console.log(mixDeposits);
-        console.log('accounts:');
-        console.log(JSON.stringify(accounts));
+  // For each user deposit
+  mixDeposits.map((item) => {
 
-        // For each user deposit
-        mixDeposits.map((item) => {
+    // Get withdrawl addresses stored in db for that user
+    db.collection('accounts', function(er, collection) {
+      collection.find({"parentAddress": item.fromAddress}).toArray(function(err, docs) {
+        if (err) {
+            //console.log(err);
+        } else {
+          account = docs[0];
+          console.log('Mix deposits:')
+          console.log(mixDeposits);
+          console.log('account:');
+          console.log(JSON.stringify(account));
+          
+          /* If we match a user's address to a parent address in our db
+           * Make note of how much total to give back, and
+           * remember the user's array of withdrawal addresses
+           */
+          var returnInfo = {
+            "amount": item.amount,
+            "fromAddress": item.fromAddress,
+            "withdrawalAddresses": account.withdrawalAddresses
+          }
 
-          // search the accounts in our mixer's database
-          accounts.map((account) => {
-        
-            /* If we match a user's address to a parent address in our db
-             * Make note of how much total to give back, and
-             * remember the user's array of withdrawal addresses
-             */
-            if (item.fromAddress === account.parentAddress) {
-              var returnInfo = {
-              "amount": item.amount,
-              "fromAddress": item.fromAddress,
-              "withdrawalAddresses": account.withdrawalAddresses
-              }
-              transactionInfo.push(returnInfo);
-            }
+          transactionInfo.push(returnInfo);
 
+          console.log('transactionInfo');
+          console.log(JSON.stringify(transactionInfo));
+          
+          var returnTransactionInfo = transactionInfo;
+          var returnDeposits = [];
+          var transaction, houseIndex;
+
+          returnTransactionInfo.map((info) => {
+            houseIndex = randomInt (0, houseAddresses.length);
+            transaction = generateDeposits(info.amount, houseAddresses[houseIndex], 
+                          info.withdrawalAddresses)
+            returnDeposits.push(transaction);
           });
-        });
 
-        console.log('transactionInfo');
-        console.log(JSON.stringify(transactionInfo));
-        
-        var returnTransactionInfo = transactionInfo;
-        var returnDeposits = [];
-        var transaction, houseIndex;
+          returnDeposits = returnDeposits[0];
+          console.log('Return deposits:');
+          console.log(JSON.stringify(returnDeposits) + '\n');
 
-        returnTransactionInfo.map((info) => {
-          houseIndex = randomInt (0, houseAddresses.length);
-          transaction = generateDeposits(info.amount, houseAddresses[houseIndex], 
-                        info.withdrawalAddresses)
-          returnDeposits.push(transaction);
-        });
+          // make incremental return deposits to the user's withdrawl accounts
+          returnDeposits.map((transactions) => {
+            console.log('Making incremental return deposits to user withdrawal addresses...');
+            console.log('Sum of the return deposits is ' + sum(returnDeposits));
+            deposit(returnDeposits, 'user');
+          });
+          console.log('Done mixing!');
+        }
+      });
+    });   /* end database query */
+  });
 
-        returnDeposits = returnDeposits[0];
-        console.log('Return deposits:');
-        console.log(JSON.stringify(returnDeposits) + '\n');
-
-        // make incremental return deposits to the user's withdrawl accounts
-        returnDeposits.map((transactions) => {
-          console.log('Making incremental return deposits to user withdrawal addresses...');
-          console.log('Sum of the return deposits is ' + sum(returnDeposits));
-          deposit(returnDeposits, 'user');
-        });
-
-        console.log('Done mixing!');
-
-      }
-    });
-  });   
 }
 
 /* Returns transactions with a toAddress matching the mixer's depositAddress */
