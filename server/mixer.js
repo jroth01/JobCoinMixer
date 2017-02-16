@@ -38,22 +38,18 @@ var db = MongoClient.connect(mongoUri, function(error, databaseConnection) {
  *
  * ----------------------------------------------------------------------------- */
 
-/* Retrieve time of last mix */
-lastMixDate =  Date.now();
-lastHouseDeposit = Date.now();
-
 module.exports = function(app){
+           
+/* Each time server restarts is considered the time of last mix */
+lastMixDate =  Date.now();
 
 /* Set timer interval to poll the P2P network and mix as necessary every n seconds */
 var seconds = 5; 
 var milliseconds = seconds * 1000;
-
 var timer = setInterval(function() {
   console.log("Timer elapsed. Starting mixer to poll P2P network & tumble coins");
   mixJobCoins();
 }, milliseconds);
-
-//mixJobCoins();
 
 /* ----------------------------------------------------------------------------- *
  *
@@ -76,7 +72,6 @@ function mixJobCoins() {
   * ----------------------------------------------------------------------------- */
 
   /* Poll the P2P network for transactions */
-
   axios.get(transactionsURL)
     .then(function(res){
 
@@ -86,7 +81,6 @@ function mixJobCoins() {
     var mixDeposits, houseDeposits, from, to, str;
 
     /* Get response data containing transactions */
-
     str = CircularJSON.stringify(res.data);
     var now = moment().format('MMMM Do YYYY, h:mm:ss a');
     console.log('Transaction ledger as of ' + now + ': \n' + str);
@@ -171,8 +165,8 @@ function mixJobCoins() {
  *
  * ----------------------------------------------------------------------------- */
 
-/* Returns an array of return deposit transactions 
- * to be sent from various house addresses to a user's withdrawal addresses
+/* Makes return deposit transactions 
+ * Sent from various house addresses to a user's withdrawal addresses
  */
 function makeReturnDeposits(mixDeposits) {
 
@@ -245,7 +239,6 @@ function makeReturnDeposits(mixDeposits) {
   });   
 }
 
-
 /* Returns transactions with a toAddress matching the mixer's depositAddress */
 function getMixDeposits(transactions, lastMixDate) {
 
@@ -262,7 +255,7 @@ function getMixDeposits(transactions, lastMixDate) {
     // true if deposit was made after last mix
     newItem = ( timestamp > lastMixDate);
 
-    // true if the deposit has 
+    // true if the deposit has a fromAddress
     fromSpecified = (item.fromAddress != undefined);
 
       if ( match && newItem && fromSpecified) {
@@ -332,8 +325,11 @@ function generateDeposits(originalAmount, fromAddress, destinationList) {
     return transactions;
 }
 
-/* Recursively makes all deposits in a list of transactions */
-function deposit(transactions, destination)
+/* Recursively makes all deposits in a list of transactions 
+ *
+ * Parameters: list of transactions
+ */
+function deposit(transactions)
 {
 
   // Begin with a list of transactions
@@ -387,6 +383,12 @@ function deposit(transactions, destination)
                 console.log(err);
         });
 }
+           
+/* ----------------------------------------------------------------------------- *
+ *
+ *    Utility functions
+ *
+ * ----------------------------------------------------------------------------- */
 
 /* Returns the sum of a series of transactions */
 function sum(transactions) {
