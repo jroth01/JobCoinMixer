@@ -48,7 +48,7 @@ The body of the POST request to /register must contain the following JSON:
 
 parentAddress - the address of the parent account
 
-withdrawalAddresses - an array of withdrawl addresses
+withdrawalAddresses - an array of withdrawal addresses
 
 
 Example JSON:
