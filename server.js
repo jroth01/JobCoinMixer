@@ -12,6 +12,7 @@ var validator = require('validator');
 var axios = require('axios');
 var CircularJSON = require('circular-json');
 
+/* MongoDB Configuration */
 var dbURL = 'mongodb://admin:funkyfresh@ds147799.mlab.com:47799/heroku_vm2rx1sr';
 var mongoUri = process.env.MONGODB_URI || process.env.MONGOLAB_URI || process.env.MONGOHQ_URL || dbURL;
 var MongoClient = require('mongodb').MongoClient, format = require('util').format;
@@ -19,7 +20,7 @@ var db = MongoClient.connect(mongoUri, function(error, databaseConnection) {
   db = databaseConnection;
 });
 
-/* App Configuration */
+/* Basic Settings */
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use("/partials", express.static(__dirname + '/client/partials'));
@@ -27,20 +28,17 @@ app.set('views', __dirname + '/client'); // views is directory for html pages
 app.engine('html', require('ejs').renderFile);
 app.set('view engine', 'html');
 
-
 /* Listen on port 3000 */
 app.set('port', (process.env.PORT || 3000));
 app.listen(app.get('port'), function() {
         console.log('Node app is running on port', app.get('port'));
 });
 
-
 /* ----------------------------------------------------------------------------- *
  *
  * 		Mixer Module
  *
  * ----------------------------------------------------------------------------- */
-
 
 /* Mixer Module */
 require('./server/mixer')(app);
@@ -121,7 +119,7 @@ app.get('/addresses', function(request, response) {
 });
 
 /* Get the list of withdrawal accounts in our mixer's database
- * Endpoint listed here for development purposes only 
+ * Endpoint listed here for development & demo purposes ONLY 
  */
 app.get('/accounts', function(request, response) {
 
@@ -146,7 +144,6 @@ app.post('/transactions', function(request, response) {
             toAddress: request.query.to,
             amount: request.query.amount
     }
-
 	axios.post(transactionsURL, obj)
 	  .then(function(res){
 	        var obj, str;
