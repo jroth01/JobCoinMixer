@@ -62,6 +62,14 @@ Example JSON:
 
 The response to the POST request contains the mixer's public deposit address
 
+# Future Improvements
+One concern I have is what happens if a particular house address reserve gets too low.
+
+Because deposits to and from the house are psuedo-randomly generated, there's the risk
+that some accounts will be depleted faster than others. To mitigate this, I'd like
+to write a function that evenly redistributes Jobcoins among all the house accounts
+each time the mixer is run. 
+
 # Running the server
 
 To start the server, cd into the project's directory and execute the following
