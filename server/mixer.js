@@ -225,15 +225,14 @@ function getMixDeposits(transactions, lastMixDate) {
   var match, newItem, fromSpecified;
 
   function notYetMixed(item) {
-    // true if transaction is sent to mixer
+
     match = (item.toAddress === depositAddress);
 
     var timestamp = new Date(item.timestamp);
     lastMixDate = new Date(lastMixDate);
-    // true if deposit was made after last mix
+
     newItem = ( timestamp > lastMixDate);
 
-    // true if the deposit has a fromAddress
     fromSpecified = (item.fromAddress != undefined);
 
     return match && newItem && fromSpecified;
