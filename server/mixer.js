@@ -214,8 +214,8 @@ function makeReturnDeposits(mixDeposits) {
 
 }
 
-/* Returns transactions with a toAddress matching the mixer's depositAddress 
- * TODO change from using map to filter to avoid null cleanup
+/* 
+ * Returns transactions with a toAddress matching the mixer's depositAddress 
  */
 function getMixDeposits(transactions, lastMixDate) {
 
