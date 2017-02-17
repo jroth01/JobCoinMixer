@@ -1,6 +1,6 @@
 /* -------------------------------------------------------------------------- *
  *
- *    JobCoin API Specific Setup
+ *    Setup
  *
  * ------------------------------------------------------------------------- */
 
@@ -14,6 +14,7 @@ var depositAddress = 'MixDeposit';
 var houseAddresses = ["House1","House2","House3","House4","House5","House6",
            "House7", "House8","House9","House10"];
 
+/* Dependencies */
 var axios = require('axios');
 var CircularJSON = require('circular-json');
 var moment = require('moment');
