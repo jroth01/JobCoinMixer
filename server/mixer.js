@@ -341,14 +341,6 @@ function deposit(transactions)
         });
 }
  
- /* 
-  * Redistributes the sum of house addresses among those addresses 
-  */
- function redistribute() {
-
-    // TODO
- }        
-
 /* -------------------------------------------------------------------------- *
  *
  *    Utility functions
