@@ -46,8 +46,9 @@ module.exports = function(app){
 /* Each time server restarts is considered the time of last mix */
 lastMixDate =  Date.now();
 
-/* Set timer interval to poll the P2P network
- *  mix as necessary every n seconds 
+/* 
+ * Set timer interval to poll the P2P network
+ * mix as necessary every n seconds 
  */
 var seconds = 10;
 var msg = 'Mixer will poll the P2P network every ' + seconds + ' seconds...\n';
@@ -148,7 +149,8 @@ function mixJobCoins() {
  *
  * ------------------------------------------------------------------------- */
 
-/* Makes return deposit transactions 
+/* 
+ * Makes return deposit transactions 
  * Sent from various house addresses to a user's withdrawal addresses
  */
 function makeReturnDeposits(mixDeposits) {
@@ -243,7 +245,8 @@ function getMixDeposits(transactions, lastMixDate) {
 
 }
 
-/* Returns a list of small deposit transactions that sum to
+/* 
+ * Returns a list of small deposit transactions that sum to
  * an original amount
  *
  * Parameters: original amount, from address, an array of destination addresses
@@ -295,7 +298,8 @@ function generateDeposits(originalAmount, fromAddress, destinationList) {
     return transactions;
 }
 
-/* Recursively makes all deposits in a list of transactions 
+/* 
+ * Recursively makes all deposits in a list of transactions 
  *
  * Parameters: list of transactions
  */
@@ -352,6 +356,7 @@ function deposit(transactions)
  *
  * ------------------------------------------------------------------------- */
 
+/* Logs whether a transaction was valid */
 function validate(depositArray, originalAmount) {
   var str;
   if (sum(depositArray) == originalAmount) {
