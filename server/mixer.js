@@ -221,7 +221,6 @@ function getMixDeposits(transactions, lastMixDate) {
 
   var match, newItem, fromSpecified;
 
-
   function notYetMixed(item) {
     // true if transaction is sent to mixer
     match = (item.toAddress === depositAddress);
