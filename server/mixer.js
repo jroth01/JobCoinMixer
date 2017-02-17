@@ -5,8 +5,9 @@
  * ------------------------------------------------------------------------- */
 
 /* JobCoin API URLS */
-var addressesURL= 'http://jobcoin.projecticeland.net/intransfusible/api/addresses/';
-var transactionsURL = 'http://jobcoin.projecticeland.net/intransfusible/api/transactions';
+var base = 'http://jobcoin.projecticeland.net/intransfusible';
+var addressesURL = base + '/api/addresses/';
+var transactionsURL = base + '/api/transactions';
 
 /* Mixer Address to which users send their coins */
 var depositAddress = 'MixDeposit';
@@ -25,8 +26,10 @@ var jsonfile = require('jsonfile')
  * ------------------------------------------------------------------------- */
 
 var dbURL = 'mongodb://admin:funkyfresh@ds147799.mlab.com:47799/heroku_vm2rx1sr'
-var mongoUri = process.env.MONGODB_URI || process.env.MONGOLAB_URI || process.env.MONGOHQ_URL || dbURL;
-var MongoClient = require('mongodb').MongoClient, format = require('util').format;
+var mongoUri = process.env.MONGODB_URI || process.env.MONGOLAB_URI 
+               || process.env.MONGOHQ_URL || dbURL;
+var MongoClient = require('mongodb').MongoClient, 
+                  format = require('util').format;
 var db = MongoClient.connect(mongoUri, function(error, databaseConnection) {
   db = databaseConnection;
 });
@@ -46,7 +49,8 @@ lastMixDate =  Date.now();
  *  mix as necessary every n seconds 
  */
 var seconds = 10;
-console.log('Mixer will poll the P2P network every ' + seconds + ' seconds...\n');
+var msg = 'Mixer will poll the P2P network every ' + seconds + ' seconds...\n';
+console.log(msg);
 var milliseconds = seconds * 1000;
 var timer = setInterval(function() {
   mixJobCoins();
@@ -101,9 +105,12 @@ function mixJobCoins() {
       console.log(JSON.stringify(houseDeposits) + '\n');
 
       if (sum(houseDeposits) == deposit["amount"]) {
-        console.log('Sum of house deposits matches original deposit amount of ' + deposit["amount"] + '\n');
+        str = 'Sum of house deposits matches original deposit amount of ';
+        console.log( str + deposit["amount"] + '\n');
       } else {
-        console.log('Uh oh. Original deposit amount was ' + deposit["amount"] + ' but the house deposits sum to ' + sum(houseDeposits) + '\n');
+        str = 'Uh oh. Original deposit amount was ' + deposit["amount"];
+        str += ' but the house deposits sum to ' + sum(houseDeposits) + '\n';
+        console.log(str);
       }
 
       allHouseDeposits.push(houseDeposits);
@@ -124,8 +131,8 @@ function mixJobCoins() {
       console.log('Making return deposits...\n');
 
       /* 
-       * Make a final set of small incremental transactions from the house addresses                   
-       * back to each user's withdrawal addresses in a random manner
+       * Make a final set of small incremental transactions from the house 
+       * addresses back to each user's withdrawal addresses in a random manner
        */
       makeReturnDeposits(mixDeposits);
 
@@ -160,7 +167,8 @@ function makeReturnDeposits(mixDeposits) {
 
     // Get withdrawl addresses stored in db for that user
     db.collection('accounts', function(er, collection) {
-      collection.find({"parentAddress": item.fromAddress}).toArray(function(err, docs) {
+      collection.find({"parentAddress": item.fromAddress}).toArray(
+        function(err, docs) {
         if (err) {
             //console.log(err);
         } else {
@@ -199,9 +207,13 @@ function makeReturnDeposits(mixDeposits) {
             console.log(JSON.stringify(returnDeposits));
 
             if (sum(returnDeposits) == item.amount) {
-            console.log('Sum of return deposits matches original deposit amount of ' + item.amount + '\n');
+              str = 'Sum of return deposits matches original deposit amount of';
+              console.log(str + ' ' + item.amount + '\n');
             } else {
-            console.log('Uh oh. Original deposit amount was ' + item.amount + ' but the return deposits sum to ' + sum(returnDeposits) + '\n');
+              str = 'Uh oh. Original deposit amount was ' + item.amount;
+              str += ' but the return deposits sum to ' + sum(returnDeposits);
+              str += '\n';
+              console.log(str);
             }
 
           /* Make the incremental return deposits to the user's withdrawl 
