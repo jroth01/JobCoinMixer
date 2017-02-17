@@ -1,10 +1,6 @@
 #JobCoin Mixer
 A JobCoin tumbler for Gemini 
 
-Master branch contains version with many console.logs in /server/mixer.js for demonstration purposes.
-
-no-logs branch contains version of /server/mixer.js without console.logs for easier reading.
-
 #Specification
 1. User must provide a list of withdrawal addresses via POST /mix
 
@@ -21,7 +17,6 @@ no-logs branch contains version of /server/mixer.js without console.logs for eas
 #Diagram of Solution
 
 ![alt tag](flowchart.png)
-
 
 #High Level Algorithm of Solution
 
@@ -42,6 +37,35 @@ server.js contains basic configuration, as well as the POST /register endpoint
 
 mixer.js is a separate module that handles the business logic of the mixer
 
+#Tradeoffs of NodeJS with Express
+"Node.js uses an event-driven, non-blocking I/O model that makes it lightweight and efficient, perfect for data-intensive real-time applications that run across distributed devices"
+
+Since this application was designed to be polling the P2P network and make many transactions in real-time, it is by definition event driven. NodeJS handles this kind of behavior well.
+
+What are the drawbacks? With Node, you frequently run in to async "callback hell" and you get less out of the box. It doesn't abstract away the delay between request-response, so it helps me demonstrate understanding. 
+
+If I were to implement this differently I might use Python with Flask, because it's lightweight
+and the syntax is cleaner. Ultimately the code would probably be easier to read.  
+
+#Tradeoffs of MongoDB
+I am generally not a fan of noSQL and MongoDB for many reasons. However, for rapid prototyping and one-off assignments, it is incredibly quick to set up and use because it's just a collection of JSON documents. In my opinion the use cases for Mongo are very limited - basically for dumping data, typically in financial or pharmaceutical applications. 
+
+In this case, I wanted a quick way to link and remember parent user addresses to their corresponding withdrawal addresses. JSON Key-value pairs and arrays were sufficient. 
+
+Why not noSQL MongoDB? It is by definition, non-relational. If you start adding features and need to represent a relational model, SQL is the way to go to avoid duplicate data everywhere. Additionally, security is commonly an issue with Mongo. I'll explain below in the section where I talk about security and privacy vulnerabilities. 
+
+# Security and Privacy Vulnerabilities
+I'll discuss the typical vulnerabilities and my efforts to mitigate them. 
+
+XSS - Cross site scripting 
+
+noSQL injection, XSRF, session hijacking
+
+Mongodb 
+To mitigate typical MongoDB security concerns, I provisioned an mLab database with heroku. Connecting to the database via mLab's API is secured via HTTPS and an API key. You must create a username and password and authenticate to connect.  
+
+When you connect to your mLab database from within the same datacenter/region (US), you communicate over heroku's internal network. Heroku provide a good deal of network security infrastructure to isolate tenants. The hypervisors used do not allow VMs to read network traffic addressed to other VMs and so no other tenant can “sniff” traffic.
+
 # Client usage: POST /register
 
 The body of the POST request to /register must contain the following JSON:
@@ -61,6 +85,8 @@ Example JSON:
 </code></pre>
 
 The response to the POST request contains the mixer's public deposit address
+
+
 
 # Future Improvements
 One concern I have is what happens if a particular house address reserve gets too low.

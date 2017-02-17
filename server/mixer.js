@@ -1,8 +1,8 @@
-/* ----------------------------------------------------------------------------- *
+/* -------------------------------------------------------------------------- *
  *
  *    JobCoin API Specific Setup
  *
- * ----------------------------------------------------------------------------- */
+ * ------------------------------------------------------------------------- */
 
 /* JobCoin API URLS */
 var addressesURL= 'http://jobcoin.projecticeland.net/intransfusible/api/addresses/';
@@ -18,11 +18,11 @@ var CircularJSON = require('circular-json');
 var moment = require('moment');
 var jsonfile = require('jsonfile')
  
-/* ----------------------------------------------------------------------------- *
+/* -------------------------------------------------------------------------- *
  *
  *    MongoDB Config
  *
- * ----------------------------------------------------------------------------- */
+ * ------------------------------------------------------------------------- */
 
 var dbURL = 'mongodb://admin:funkyfresh@ds147799.mlab.com:47799/heroku_vm2rx1sr'
 var mongoUri = process.env.MONGODB_URI || process.env.MONGOLAB_URI || process.env.MONGOHQ_URL || dbURL;
@@ -31,46 +31,44 @@ var db = MongoClient.connect(mongoUri, function(error, databaseConnection) {
   db = databaseConnection;
 });
 
-/* ----------------------------------------------------------------------------- *
+/* -------------------------------------------------------------------------- *
  *
  *    MIXER MODULE
  *
- * ----------------------------------------------------------------------------- */
+ * ------------------------------------------------------------------------- */
 
 module.exports = function(app){
-           
+      
 /* Each time server restarts is considered the time of last mix */
 lastMixDate =  Date.now();
 
-/* Set timer interval to poll the P2P network and mix as necessary every n seconds */
-var seconds = 5; 
+
+
+/* Set timer interval to poll the P2P network
+ *  mix as necessary every n seconds 
+ */
+var seconds = 10;
+console.log('Mixer will poll the P2P network every ' + seconds + ' seconds...\n');
 var milliseconds = seconds * 1000;
 var timer = setInterval(function() {
-  console.log("Timer elapsed. Starting mixer to poll P2P network & tumble coins");
   mixJobCoins();
 }, milliseconds);
 
-/* ----------------------------------------------------------------------------- *
+/* -------------------------------------------------------------------------- *
  *
- *    Mixer function
+ *  Mixer function
  *
- *    1. Parses out user deposits to mixer's deposit address from the P2P network
- *    2. Moves BTC from deposit address to house addresses
- *    3. Moves BTC from house addresses back to each user's withdrawl addresses
+ *  1. Parses out user deposits to mixer's deposit address from the P2P network
+ *  2. Moves BTC from deposit address to house addresses
+ *  3. Moves BTC from house addresses back to each user's withdrawl addresses
  *
- * ----------------------------------------------------------------------------- */
+ * ------------------------------------------------------------------------- */
 
 function mixJobCoins() {
 
-  console.log('Initializing mixer...');
+  console.log('Looking for deposits to mix...\n');
 
- /* ----------------------------------------------------------------------------- *
-  *
-  *   1. Identify the number of deposits sent to our mixer that need to be tumbled
-  *
-  * ----------------------------------------------------------------------------- */
-
-  /* Poll the P2P network for transactions */
+  // Poll the P2P network for transactions 
   axios.get(transactionsURL)
     .then(function(res){
 
@@ -79,76 +77,63 @@ function mixJobCoins() {
     var returnDeposits = [];
     var mixDeposits, houseDeposits, from, to, str;
 
-    /* Get response data containing transactions */
+    // Get response data containing transactions
     str = CircularJSON.stringify(res.data);
-    var now = moment().format('MMMM Do YYYY, h:mm:ss a');
-    console.log('Transaction ledger as of ' + now + ': \n' + str);
 
-    /* Parse out deposits sent to our mixer 
-     * Only tumble if deposit has not already been mixed
-     */
+    //Identify the number of deposits sent to our mixer that need to be tumbled
      mixDeposits = getMixDeposits(res.data, lastMixDate);
-   
-     console.log("here are mix deposits");
-     console.log(JSON.stringify( mixDeposits));
   
-     /* 
+    /* 
      * For each user's original amount sent to our deposit address,
      * generate small incremental transactions that sum to the original amount
-     *
-     * Prepare a batch of all the small transactions to be sent from the mixer's deposit 
-     * address to house addresses
      */
     if (mixDeposits != undefined && mixDeposits.length > 0) {
 
-      console.log('There are ' + mixDeposits.length + ' mix deposits to be tumbled:');
-      console.log(JSON.stringify(mixDeposits));
+      console.log('Mixing...\n');
 
       mixDeposits.map((deposit) => {
 
-      console.log('Here is the deposit\n' + deposit);
-      houseDeposits = generateDeposits(deposit["amount"], depositAddress, houseAddresses);
+        console.log('Original deposit to mixer:');
+        console.log(JSON.stringify(deposit) + '\n');
 
-       console.log('The sum of the transactions is ' + sum(houseDeposits));
-       console.log('Checking against original...');
+        houseDeposits = generateDeposits(deposit["amount"], 
+                                          depositAddress, houseAddresses);
+
+        console.log('Here are the corresponding house deposits:');
+        console.log(JSON.stringify(houseDeposits) + '\n');
 
        if (sum(houseDeposits) == deposit["amount"]) {
-          console.log('VERIFIED: Matches original deposit amount of ' + deposit["amount"]);
+        console.log('Sum of house deposits matches original deposit amount of ' + deposit["amount"] + '\n');
        } else {
-          console.log('DISCREPANCY: original deposit amount was ' + deposit["amount"]);
+        console.log('Uh oh. Original deposit amount was ' + deposit["amount"] + ' but the house deposits sum to ' + sum(houseDeposits) + '\n');
        }
+
       allHouseDeposits.push(houseDeposits);
 
       });
 
       allHouseDeposits = allHouseDeposits[0];
-      console.log('All houseDeposits:');
-      console.log(JSON.stringify(allHouseDeposits));
      
-      /* ----------------------------------------------------------------------------- *
-       *
-       *   2. Make the small incremental transactions from the mixer's deposit                   
-       *   address to various house addresses in a random manner  
-       *
-       * ----------------------------------------------------------------------------- */
-
+      /*
+       * Make the small incremental transactions from the mixer's deposit                   
+       * address to various house addresses in a random manner  
+       */
       houseDeposits.map((transactions) => {
-        console.log('Making incremental deposits to house addresses...');
         deposit(allHouseDeposits, 'house');
       });
 
-      /* ----------------------------------------------------------------------------- *
-       *
-       *   3. Make a final set of small incremental transactions from the house addresses                   
-       *   back to each user's withdrawal addresses in a random manner
-       *
-       * ----------------------------------------------------------------------------- */
+      console.log('Done making house deposits.\n');
+      console.log('Making return deposits...\n');
 
+      /* 
+       * Make a final set of small incremental transactions from the house addresses                   
+       * back to each user's withdrawal addresses in a random manner
+       */
       makeReturnDeposits(mixDeposits);
 
     }
     else {
-      console.log('Nothing to mix!');
+      console.log('Nothing to mix!\n');
     }
 
     })
@@ -158,11 +143,11 @@ function mixJobCoins() {
 
 }
 
-/* ----------------------------------------------------------------------------- *
+/* -------------------------------------------------------------------------- *
  *
  *    Helper functions
  *
- * ----------------------------------------------------------------------------- */
+ * ------------------------------------------------------------------------- */
 
 /* Makes return deposit transactions 
  * Sent from various house addresses to a user's withdrawal addresses
@@ -182,12 +167,8 @@ function makeReturnDeposits(mixDeposits) {
             //console.log(err);
         } else {
           account = docs[0];
-          console.log('Mix deposits:')
-          console.log(mixDeposits);
-          console.log('account:');
-          console.log(JSON.stringify(account));
           
-          /* If we match a user's address to a parent address in our db
+          /* 
            * Make note of how much total to give back, and
            * remember the user's array of withdrawal addresses
            */
@@ -198,32 +179,39 @@ function makeReturnDeposits(mixDeposits) {
           }
 
           transactionInfo.push(returnInfo);
-
-          console.log('transactionInfo');
-          console.log(JSON.stringify(transactionInfo));
           
           var returnTransactionInfo = transactionInfo;
           var returnDeposits = [];
           var transaction, houseIndex;
 
+          // Generate return deposits 
           returnTransactionInfo.map((info) => {
             houseIndex = randomInt (0, houseAddresses.length);
-            transaction = generateDeposits(info.amount, houseAddresses[houseIndex], 
-                          info.withdrawalAddresses)
+            transaction = generateDeposits(info.amount,
+                                houseAddresses[houseIndex], 
+                                info.withdrawalAddresses)
             returnDeposits.push(transaction);
+
           });
 
           returnDeposits = returnDeposits[0];
-          console.log('Return deposits:');
-          console.log(JSON.stringify(returnDeposits) + '\n');
 
-          // make incremental return deposits to the user's withdrawl accounts
+            console.log('Return deposits to user:');
+            console.log(JSON.stringify(returnDeposits));
+
+            if (sum(returnDeposits) == item.amount) {
+            console.log('Sum of return deposits matches original deposit amount of ' + item.amount + '\n');
+            } else {
+            console.log('Uh oh. Original deposit amount was ' + item.amount + ' but the return deposits sum to ' + sum(returnDeposits) + '\n');
+            }
+
+
+          /* Make the incremental return deposits to the user's withdrawl 
+           * accounts
+           */
           returnDeposits.map((transactions) => {
-            console.log('Making incremental return deposits to user withdrawal addresses...');
-            console.log('Sum of the return deposits is ' + sum(returnDeposits));
             deposit(returnDeposits, 'user');
           });
-          console.log('Done mixing!');
         }
       });
     });   /* end database query */
@@ -231,7 +219,9 @@ function makeReturnDeposits(mixDeposits) {
 
 }
 
-/* Returns transactions with a toAddress matching the mixer's depositAddress */
+/* Returns transactions with a toAddress matching the mixer's depositAddress 
+ * TODO change from using map to filter to avoid null cleanup
+ */
 function getMixDeposits(transactions, lastMixDate) {
 
   var match, newItem, fromSpecified;
@@ -273,7 +263,7 @@ function getMixDeposits(transactions, lastMixDate) {
 function generateDeposits(originalAmount, fromAddress, destinationList) {
   var sum = 0;
   var deposit, depositAmount, destinationIndex, difference, from, to;
-  var upperBound =  originalAmount / 4;
+  var upperBound =  Math.floor(originalAmount / 4);
   var transactions = [];
   from = fromAddress;
 
@@ -282,7 +272,7 @@ function generateDeposits(originalAmount, fromAddress, destinationList) {
 
     // generate a random int amount to deposit between 1 
     // and quarter of the original 
-    depositAmount = randomNum(1,upperBound);
+    depositAmount = randomInt(1,upperBound);
 
     // pick a random destination address to deposit to
     destinationIndex = randomInt(0, destinationList.length);
@@ -323,22 +313,14 @@ function generateDeposits(originalAmount, fromAddress, destinationList) {
  */
 function deposit(transactions)
 {
-
   // Begin with a list of transactions
   var deposits = transactions[0];
 
   // Base case - list is empty 
-  if (deposits === undefined) {
-
-    msg = "Completed successfully!";
-    console.log(msg); 
+  if (deposits === undefined ) {
     
-    /* If we finished returning deposits to a user, we're
-     * done with the current tumble and can update 
-     * the latest mix timestamp
-     * 
-     * Else we finished deposits from mixer to
-     * house accounts
+    /* If we finished returning deposits to a user, 
+     * update the latest mix timestamp
      */
      var now = Date.now();
      lastMixDate = now
@@ -347,28 +329,19 @@ function deposit(transactions)
   }
 
   var depositObj = deposits;
-  console.log('Depositing: ' + JSON.stringify(depositObj)); 
 
   // Remove the first element of the array
   transactions.shift();  
 
   axios.post(transactionsURL, depositObj)
         .then(function(res){
-          
-              console.log('Successfully deposited: ' + JSON.stringify(depositObj)); 
-              
+
+              /* Set timer delay for each deposit */
               var seconds = randomInt(0, 10); 
               var milliseconds = seconds * 1000;
-             
-              /* Set timer delay for each deposit */
-              console.log('making deposit after delay of ' + seconds + ' seconds');
-
               var timer = setTimeout(function() {
-              console.log("Timer elapsed. Starting mixer to poll P2P network & tumble coins");
-
                   // Recurse on the truncated array
                   return deposit(transactions);
-
               }, milliseconds);
             
         })
@@ -377,42 +350,19 @@ function deposit(transactions)
         });
 }
  
- /* Redistributes the sum of house addresses among those addresses */
- function redistribute(destinations) {
+ /* 
+  * Redistributes the sum of house addresses among those addresses 
+  */
+ function redistribute() {
 
-    // Base case - list is empty 
-    if (destinations === undefined) {
-      msg = "Completed successfully!";
-      return;
-    }
-
-    // Remove the first element of the array
-    destinations.shift();  
-
-    addressesURL += address;
-
-    // Get the balance and 
-    axios.get(addressesURL)
-      .then(function(res){
-        var obj, str;
-        obj = res;
-        sum += obj.data.balance;
-
-        // Recurse on the truncated array
-        return redistribute(destinations) ;
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-
+    // TODO
  }        
 
-
-/* ----------------------------------------------------------------------------- *
+/* -------------------------------------------------------------------------- *
  *
  *    Utility functions
  *
- * ----------------------------------------------------------------------------- */
+ * ------------------------------------------------------------------------- */
 
 /* Returns the sum of a series of transactions */
 function sum(transactions) {

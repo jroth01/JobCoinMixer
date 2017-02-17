@@ -31,7 +31,7 @@ app.set('view engine', 'html');
 /* Listen on port 3000 */
 app.set('port', (process.env.PORT || 3000));
 app.listen(app.get('port'), function() {
-        console.log('Node app is running on port', app.get('port'));
+        console.log('Node app is running on port', app.get('port') + '\n');
 });
 
 /* ----------------------------------------------------------------------------- *
@@ -68,7 +68,11 @@ app.get('/mainCtrl.js', function(request, response) {
  * parentAddress: the address of the parent account
  */
 app.post('/register', function(request, response) {
-           
+
+  // Configure CORS in the response header
+  response.header("Access-Control-Allow-Origin", "*");
+  response.header("Access-Control-Allow-Headers", "X-Requested-With");
+
 	var withdrawals = request.body.withdrawalAddresses; 
 	var parent = request.body.parentAddress;
 	 
@@ -91,69 +95,4 @@ app.post('/register', function(request, response) {
 	    }
 	  });
 	});   
-});
-
-/* Get the balance and list of transactions for an address
- * Query string parameter: address
- */
-app.get('/addresses', function(request, response) {
-
-    addressesURL += request.query.address;
-    axios.get(addressesURL)
-        .then(function(res){
-          var obj, str;
-          obj = res;
-          obj = {
-                  transactions: obj.data.transactions,
-                  balance: obj.data.balance
-          };
-          str = CircularJSON.stringify(obj);
-          console.log(str);
-          response.send(str);
-
-        })
-        .catch((err) => {
-          console.log(err);
-        });
-
-});
-
-/* Get the list of withdrawal accounts in our mixer's database
- * Endpoint listed here for development & demo purposes ONLY 
- */
-app.get('/accounts', function(request, response) {
-
-    // Get withdrawl addresses stored in db for each user
-  db.collection('accounts', function(er, collection) {
-    collection.find().toArray(function(err, docs) {
-      if (err) {
-          console.log(err);
-      } else {
-        response.send(JSON.stringify(docs));
-      }
-    });
-  });  
-
-});
-
-/* POST new transaction */
-app.post('/transactions', function(request, response) {
-
-    var obj = {
-            fromAddress: request.query.from,
-            toAddress: request.query.to,
-            amount: request.query.amount
-    }
-	axios.post(transactionsURL, obj)
-	  .then(function(res){
-	        var obj, str;
-	        obj = res;
-	        str = CircularJSON.stringify(obj.data);
-	        console.log(str);
-	      response.send(str);
-	      
-	  })
-	  .catch((err) => {
-	          console.log(err);
-	  });
 });
