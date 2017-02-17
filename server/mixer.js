@@ -104,14 +104,7 @@ function mixJobCoins() {
       console.log('Here are the corresponding house deposits:');
       console.log(JSON.stringify(houseDeposits) + '\n');
 
-      if (sum(houseDeposits) == deposit["amount"]) {
-        str = 'Sum of house deposits matches original deposit amount of ';
-        console.log( str + deposit["amount"] + '\n');
-      } else {
-        str = 'Uh oh. Original deposit amount was ' + deposit["amount"];
-        str += ' but the house deposits sum to ' + sum(houseDeposits) + '\n';
-        console.log(str);
-      }
+      validate(houseDeposits, deposit["amount"]);
 
       allHouseDeposits.push(houseDeposits);
 
@@ -203,18 +196,10 @@ function makeReturnDeposits(mixDeposits) {
 
           returnDeposits = returnDeposits[0];
 
-            console.log('Return deposits to user:');
-            console.log(JSON.stringify(returnDeposits));
+          console.log('Return deposits to user:');
+          console.log(JSON.stringify(returnDeposits) + '\n');
 
-            if (sum(returnDeposits) == item.amount) {
-              str = 'Sum of return deposits matches original deposit amount of';
-              console.log(str + ' ' + item.amount + '\n');
-            } else {
-              str = 'Uh oh. Original deposit amount was ' + item.amount;
-              str += ' but the return deposits sum to ' + sum(returnDeposits);
-              str += '\n';
-              console.log(str);
-            }
+          validate(returnDeposits, item.amount);
 
           /* Make the incremental return deposits to the user's withdrawl 
            * accounts
@@ -366,6 +351,19 @@ function deposit(transactions)
  *    Utility functions
  *
  * ------------------------------------------------------------------------- */
+
+function validate(depositArray, originalAmount) {
+  var str;
+  if (sum(depositArray) == originalAmount) {
+    str = 'Sum of return deposits matches original deposit amount of';
+    console.log(str + ' ' + originalAmount + '\n');
+  } else {
+    str = 'Uh oh. Original deposit amount was ' + originalAmount;
+    str += ' but the return deposits sum to ' + sum(depositArray);
+    str += '\n';
+    console.log(str);
+  }
+}
 
 /* Returns the sum of a series of transactions */
 function sum(transactions) {
