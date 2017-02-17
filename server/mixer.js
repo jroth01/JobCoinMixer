@@ -42,8 +42,6 @@ module.exports = function(app){
 /* Each time server restarts is considered the time of last mix */
 lastMixDate =  Date.now();
 
-
-
 /* Set timer interval to poll the P2P network
  *  mix as necessary every n seconds 
  */
@@ -93,20 +91,20 @@ function mixJobCoins() {
 
       mixDeposits.map((deposit) => {
 
-        console.log('Original deposit to mixer:');
-        console.log(JSON.stringify(deposit) + '\n');
+      console.log('Original deposit to mixer:');
+      console.log(JSON.stringify(deposit) + '\n');
 
-        houseDeposits = generateDeposits(deposit["amount"], 
+      houseDeposits = generateDeposits(deposit["amount"], 
                                           depositAddress, houseAddresses);
 
-        console.log('Here are the corresponding house deposits:');
-        console.log(JSON.stringify(houseDeposits) + '\n');
+      console.log('Here are the corresponding house deposits:');
+      console.log(JSON.stringify(houseDeposits) + '\n');
 
-       if (sum(houseDeposits) == deposit["amount"]) {
+      if (sum(houseDeposits) == deposit["amount"]) {
         console.log('Sum of house deposits matches original deposit amount of ' + deposit["amount"] + '\n');
-       } else {
+      } else {
         console.log('Uh oh. Original deposit amount was ' + deposit["amount"] + ' but the house deposits sum to ' + sum(houseDeposits) + '\n');
-       }
+      }
 
       allHouseDeposits.push(houseDeposits);
 
@@ -166,6 +164,7 @@ function makeReturnDeposits(mixDeposits) {
         if (err) {
             //console.log(err);
         } else {
+          
           account = docs[0];
           
           /* 
