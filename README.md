@@ -52,17 +52,34 @@ I am generally not a fan of noSQL and MongoDB for many reasons. However, for rap
 
 In this case, I wanted a quick way to link and remember parent user addresses to their corresponding withdrawal addresses. JSON Key-value pairs and arrays were sufficient. 
 
+
 Why not noSQL MongoDB? It is by definition, non-relational. If you start adding features and need to represent a relational model, SQL is the way to go to avoid duplicate data everywhere. Additionally, security is commonly an issue with Mongo. I'll explain below in the section where I talk about security and privacy vulnerabilities. 
 
 # Security and Privacy Vulnerabilities
 I'll discuss the typical vulnerabilities and my efforts to mitigate them. 
 
 XSS - Cross site scripting 
+I tried to use use RegExp to remove special chars and script tags from input received on POST /register.
+However, for some reason I couldn't get it to work so I omitted it. You definitely always want to santize input on the server side.
 
-noSQL injection, XSRF, session hijacking
+XSRF - Cross site request forgery
+XSRF attacks are considered useful if the attacker knows the target is authenticated to a web based system. But in this application, there's no login, so it doensn't really apply. 
 
-Mongodb 
-To mitigate typical MongoDB security concerns, I provisioned an mLab database with heroku. Connecting to the database via mLab's API is secured via HTTPS and an API key. You must create a username and password and authenticate to connect.  
+CORS Config 
+I set the response header to "Access-Control-Allow-Origin", "*" on the POST /register endpoint so that
+anyone could use a client like POSTMAN to test regardless of doman. - normally
+you would want to specifically whitelist specific domains and not use the wildcard character. 
+An alternative approach might be to have a client side login form served by the app, and then
+only accept post requests from the app itself. 
+
+noSQL injection
+Similarly to preventing noSQL injection, you want to sanitize input on the server side by removing
+any special characters or malicious expressions that could be passed to the MongoDB client directly. 
+I believe filtering out $where and a few other keywords would do the trick, but i'm not
+familiar enough with regEx.  
+
+MongoDB
+To mitigate typical MongoDB security concerns i, I provisioned an mLab database with heroku. Connecting to the database via mLab's API is secured via HTTPS and an API key. You must create a username and password and authenticate to connect.  
 
 When you connect to your mLab database from within the same datacenter/region (US), you communicate over heroku's internal network. Heroku provide a good deal of network security infrastructure to isolate tenants. The hypervisors used do not allow VMs to read network traffic addressed to other VMs and so no other tenant can “sniff” traffic.
 
@@ -85,7 +102,6 @@ Example JSON:
 </code></pre>
 
 The response to the POST request contains the mixer's public deposit address
-
 
 
 # Future Improvements

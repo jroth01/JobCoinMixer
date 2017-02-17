@@ -20,6 +20,7 @@ var db = MongoClient.connect(mongoUri, function(error, databaseConnection) {
   db = databaseConnection;
 });
 
+
 /* Basic Settings */
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -39,6 +40,8 @@ app.listen(app.get('port'), function() {
  * 		Mixer Module
  *
  * ----------------------------------------------------------------------------- */
+
+var depositAddress = 'MixDeposit';
 
 /* Mixer Module */
 require('./server/mixer')(app);
@@ -75,11 +78,14 @@ app.post('/register', function(request, response) {
 
 	var withdrawals = request.body.withdrawalAddresses; 
 	var parent = request.body.parentAddress;
-	 
+  	
 	var toInsert = {
 	  "parentAddress": parent,
 	  "withdrawalAddresses": withdrawals
 	};
+
+  // Ensures only one of each parent address listed in our database
+  db.collection('accounts').createIndex({parentAddress:1},{unique:true});
 
 	// Save information in a database
 	db.collection('accounts', function(er, collection) {
@@ -89,9 +95,16 @@ app.post('/register', function(request, response) {
 	    } else if (!saved) {
 	        response.sendStatus(500);
 	    } else {
-	    	var res = 'Saved the following information: ' + JSON.stringify(toInsert);
-	    	res += '\n This mixer\'s deposit address is \'' + depositAddress + '\'';
-	        response.send(res);
+
+        if (saved.ops != undefined) {
+          res = 'ERR: This parent address is already on file.\n';
+          res += 'Please contact the application administrator to verify your identity if you wish to ';
+          res += 'update your information.\n';
+        } else {
+          res = 'Saved the following information: ' + JSON.stringify(toInsert);
+        }
+	    	res += '\nThis mixer\'s deposit address is \'' + depositAddress + '\'';
+	      response.send(res);
 	    }
 	  });
 	});   
