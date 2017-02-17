@@ -228,8 +228,8 @@ function getMixDeposits(transactions, lastMixDate) {
     // true if transaction is sent to mixer
     match = (item.toAddress === depositAddress);
 
-      var timestamp = new Date(item.timestamp);
-     lastMixDate = new Date(lastMixDate);
+    var timestamp = new Date(item.timestamp);
+    lastMixDate = new Date(lastMixDate);
     // true if deposit was made after last mix
     newItem = ( timestamp > lastMixDate);
 
