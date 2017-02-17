@@ -236,32 +236,25 @@ function getMixDeposits(transactions, lastMixDate) {
 
   var match, newItem, fromSpecified;
 
-  var mixDeposits = transactions.map((item) => {
 
+  function notYetMixed(item) {
     // true if transaction is sent to mixer
     match = (item.toAddress === depositAddress);
 
-    var timestamp = new Date(item.timestamp);
-    lastMixDate = new Date(lastMixDate);
-
+      var timestamp = new Date(item.timestamp);
+     lastMixDate = new Date(lastMixDate);
     // true if deposit was made after last mix
     newItem = ( timestamp > lastMixDate);
 
     // true if the deposit has a fromAddress
     fromSpecified = (item.fromAddress != undefined);
 
-      if ( match && newItem && fromSpecified) {
-        return item;
-      }
-  });
+    return match && newItem && fromSpecified;
+  }
 
-  if (!isNull(mixDeposits))  {
-    mixDeposits = removeNull(mixDeposits);
-    return mixDeposits;
-  }
-  else {
-    return [];
-  }
+  var mixDeposits = transactions.filter(notYetMixed);
+
+  return mixDeposits;
 
 }
 
@@ -401,23 +394,6 @@ function randomNum (low, high) {
 /* Returns a random int between a lower and upper bound */
 function randomInt (low, high) {
   return Math.floor(Math.random() * (high - low) + low);
-}
-
-/* Returns true if every elem in an array is null, else false */
-function isNull(arr) {
-  for (var i = 0; i < arr.length; i++) {
-      if (arr[i] != null)
-        return false;
-  }
-  return true;
-}
-
-// Returns array with null elements removed
-function removeNull(arr) {
-  function rmNull(item) {
-      return item != null && item != undefined;
-  }
-  return arr.filter(rmNull);
 }
 
 } /* end module.exports */
