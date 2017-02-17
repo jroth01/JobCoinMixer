@@ -204,7 +204,6 @@ function makeReturnDeposits(mixDeposits) {
             console.log('Uh oh. Original deposit amount was ' + item.amount + ' but the return deposits sum to ' + sum(returnDeposits) + '\n');
             }
 
-
           /* Make the incremental return deposits to the user's withdrawl 
            * accounts
            */
