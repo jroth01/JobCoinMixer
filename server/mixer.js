@@ -95,18 +95,18 @@ function mixJobCoins() {
 
       mixDeposits.map((deposit) => {
 
-      console.log('Original deposit to mixer:');
-      console.log(JSON.stringify(deposit) + '\n');
+        console.log('Original deposit to mixer:');
+        console.log(JSON.stringify(deposit) + '\n');
 
-      houseDeposits = generateDeposits(deposit["amount"], 
-                                          depositAddress, houseAddresses);
+        houseDeposits = generateDeposits(deposit["amount"], 
+                                            depositAddress, houseAddresses);
 
-      console.log('Here are the corresponding house deposits:');
-      console.log(JSON.stringify(houseDeposits) + '\n');
+        console.log('Here are the corresponding house deposits:');
+        console.log(JSON.stringify(houseDeposits) + '\n');
 
-      validate(houseDeposits, deposit["amount"]);
+        validate(houseDeposits, deposit["amount"]);
 
-      allHouseDeposits.push(houseDeposits);
+        allHouseDeposits.push(houseDeposits);
 
       });
 
