@@ -1,5 +1,8 @@
 #JobCoin Mixer
-A JobCoin tumbler for Gemini 
+A JobCoin tumbler.
+
+#What is JobCoin?
+It's a simplified version of bitcoin used for sandboxing apps
 
 #Specification
 1. User must provide a list of withdrawal addresses via POST /register
