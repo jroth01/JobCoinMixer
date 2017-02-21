@@ -89,7 +89,7 @@ familiar enough with regEx.
 
 MongoDB
 
-To mitigate typical MongoDB security concerns i, I provisioned an mLab database with heroku. Connecting to the database via mLab's API is secured via HTTPS and an API key. You must create a username and password and authenticate to connect.  
+To mitigate typical MongoDB security concerns, I provisioned an mLab database with heroku. Connecting to the database via mLab's API is secured via HTTPS and an API key. You must create a username and password and authenticate to connect.  
 
 When you connect to your mLab database from within the same datacenter/region (US), you communicate over heroku's internal network. Heroku provide a good deal of network security infrastructure to isolate tenants. The hypervisors used do not allow VMs to read network traffic addressed to other VMs and so no other tenant can “sniff” traffic.
 
